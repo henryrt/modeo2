@@ -27,7 +27,7 @@ namespace RTH.Modeo2
         public TargetObjective(double target) : this(target, 1, 1)
         {
         }
-        public virtual double Evaluate(ISolution soln)
+        public virtual double Value(ISolution soln)
         {
             return ValueProvider(soln);
         }
@@ -40,7 +40,7 @@ namespace RTH.Modeo2
 
         public int Penalty(ISolution soln)
         {
-            return Penalty(Evaluate(soln));
+            return Penalty(Value(soln));
 
         }
     }

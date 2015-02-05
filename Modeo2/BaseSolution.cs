@@ -12,6 +12,17 @@ namespace RTH.Modeo2
         // Evaluations store a penalty value. Lower penalties are better.
         private Dictionary<IObjective, Evaluation> Evaluations;
 
+        public bool Filtered
+        {
+            get;
+            set;
+        }
+
+        public void ClearEvaluationCache()
+        {
+            Evaluations = null;
+        }
+
         public bool Dominates(ISolution soln, IEnumerable<IObjective> objs)
         {
             // Can not dominate itself
@@ -32,22 +43,17 @@ namespace RTH.Modeo2
             return (Evaluations ?? (Evaluations = ComputeEvaluations(objs)));
         }
 
-        private Dictionary<IObjective, Evaluation> ComputeEvaluations(IEnumerable<IObjective>  objs)
+        public Dictionary<IObjective, Evaluation> ComputeEvaluations(IEnumerable<IObjective> objs)
         {
             var e = new Dictionary<IObjective, Evaluation>();
-            var list = objs.ToList<IObjective>(); // performance?
-            
-
-            //Evaluate the solution for each objective
-            list.ForEach(obj => e[obj] = Evaluate(obj));
-
+            foreach (var obj in objs) e[obj] = Evaluate(obj);
             return e;
         }
 
         public Evaluation Evaluate(IObjective obj)
-        { 
+        {
             var eval = new Evaluation();
-            eval.Value = obj.Evaluate(this);                 
+            eval.Value = obj.Value(this);
             eval.Penalty = obj.Penalty(eval.Value);
             return eval;
         }

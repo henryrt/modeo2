@@ -12,16 +12,9 @@ namespace RTH.Modeo2
         static void Main(string[] args)
         {
             BaseSolver solver = new BaseSolver();
-            var objectives = new List<IObjective>() {
-                new TargetObjective(5) {
-                    ValueProvider = (soln) => { return ((Solution1)soln).N; }
-                },
-                new TargetObjective(8) {
-                    ValueProvider = (soln) => { return ((Solution1)soln).N; }
-                }
-                };
-                var solutions = new List<ISolution>();
-            for (int i = 0; i< 100; i++)
+
+            var solutions = new List<ISolution>();
+            for (int i = 0; i < 100; i++)
             {
                 var s = new Solution1();
                 if (!s.IsDuplicate(solutions))
@@ -30,46 +23,80 @@ namespace RTH.Modeo2
                 }
             }
 
-            var c = solver.Collections;
-            c.AddCollection<List<IObjective>, IObjective>(objectives);
-            c.AddCollection<List<ISolution>, ISolution>(solutions);
+            var objs = new List<IObjective>();
+            for (int i = 0; i < 15; i++) { objs.Add(new TargetObjective(i) { ValueProvider = (parm) => { return ((Solution1)parm).N; } }); }
 
-            Console.WriteLine(c.GetReadOnlyCollection<IObjective>());
-            Console.WriteLine(c.GetReadOnlyCollection<ISolution>());
+ 
+            var store = solver.DataStore;
+            store.AddCollection<List<IObjective>, IObjective>(objs);
+            store.AddCollection<List<ISolution>, ISolution>(solutions);
 
-            var o1 = c.GetReadOnlyCollection<IObjective>();
-            //o1.Add(new Objective1());
-            foreach (var o2 in c.GetEnumerable<IObjective>())
-            {
-                Console.WriteLine(o2);
-            }
+            store.Add<Filter>(Filter1);
+            store.Add<Filter>(Filter2);
 
-            var objs = c.GetEnumerable<IObjective>();
+            //Console.WriteLine(c.GetReadOnlyCollection<IObjective>());
+            //Console.WriteLine(c.GetReadOnlyCollection<ISolution>());
 
-            var solns = c.GetEnumerable<ISolution>();
-            foreach(Solution1 s in solns)
+            //var o1 = c.GetReadOnlyCollection<IObjective>();
+            ////o1.Add(new Objective1());
+            //foreach (var o2 in c.GetEnumerable<IObjective>())
+            //{
+            //    Console.WriteLine(o2);
+            //}
+
+            //var objs = c.GetEnumerable<IObjective>();
+
+            solver.ApplyFilter(Filter1);
+            solver.ApplyFilter(Filter2);
+            solver.RemoveFilteredSolutions();
+
+            var solns = store.GetReadOnlyCollection<ISolution>();
+            foreach (Solution1 s in solns)
             {
                 var dominated = s.IsDominated(solns, objs);
-                Console.WriteLine(String.Format("{0} {1} {2} {3}", s.Evaluate(objs)[objectives[0]].Penalty, s.Evaluate(objs)[objectives[1]].Penalty, dominated, s.N));
-
+                var evals = s.Evaluate(objs);
+                foreach (var eval in evals.Values)
+                {
+                    Console.Write(eval.Penalty + " ");
+                }
+                
+                Console.WriteLine(String.Format(dominated +" "+ s.N));
+                store.Add<ISolution>(new Solution1());
             }
+        }
 
-            
+        public static bool Filter1(CollectionManager cm, ISolution soln)
+        {
+            // flag any solutions that have an undesired objective penalty
+            var objs = cm.GetEnumerable<IObjective>();
+            return objs.Any(obj => soln.Evaluate(obj).Penalty > 11);
+        }
+        public static bool Filter2(CollectionManager cm, ISolution soln)
+        {
+            // flag any solutions that have the first objective value < 3
+            var objs = cm.GetEnumerable<IObjective>();
+            return objs.First().Value(soln) < 3;
+        }
 
-
+        private static TimeSpan Timer(Action a)
+        {
+            var startTime = DateTime.Now;
+            a();
+            return DateTime.Now.Subtract(startTime);
         }
     }
 
+
     class Objective1 : IObjective
     {
-        public double Evaluate(ISolution soln)
+        public double Value(ISolution soln)
         {
             return Math.Abs((soln as Solution1).N - 5);
         }
 
         public int Penalty(ISolution soln)
         {
-            return Penalty(Evaluate(soln));
+            return Penalty(Value(soln));
         }
 
         public int Penalty(double val)
@@ -79,14 +106,14 @@ namespace RTH.Modeo2
     }
     class Objective2 : IObjective
     {
-        public double Evaluate(ISolution soln)
+        public double Value(ISolution soln)
         {
             return Math.Abs((soln as Solution1).N - 8);
         }
 
         public int Penalty(ISolution soln)
         {
-            return Penalty(Evaluate(soln));
+            return Penalty(Value(soln));
         }
 
         public int Penalty(double val)

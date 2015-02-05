@@ -3,7 +3,7 @@
     public interface IObjective
     {
         // returns (double) the Value of the Objective for the given Solution
-        double Evaluate(ISolution soln);
+        double Value(ISolution soln);
 
         // returns (int) the Penalty the Value incurs for the given Solution
         int Penalty(ISolution soln);

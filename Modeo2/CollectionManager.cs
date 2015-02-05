@@ -1,20 +1,25 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace RTH.Modeo2
 {
     public class CollectionManager
     {
-        // Manages collections in a Hashtable. One List per Type.
-        Hashtable ht = new Hashtable();
+        // Manages collections in a Hashtable. 
+        private Hashtable ht = new Hashtable();
 
         public void Add<T>(T item)
         {
-            if (ht[typeof(T)] == null)
+            List<T> collection;
+            lock (ht)
             {
-                ht.Add(typeof(T), new List<T>());
+                collection = ht[typeof(T)] as List<T> ?? new List<T>();
+                if (collection.Count == 0) ht[typeof(T)] = collection;
             }
-            (ht[typeof(T)] as List<T>).Add(item);
+            lock(collection) collection.Add(item);
+            
         }
 
         public void AddCollection<ICollection, T>(ICollection<T> collection)
@@ -24,12 +29,32 @@ namespace RTH.Modeo2
 
         public IReadOnlyCollection<T> GetReadOnlyCollection<T>()
         {
-            return (IReadOnlyCollection<T>)ht[typeof(T)]; // use a cast so type-mismatch will throw exception
+            var collection = (List<T>)ht[typeof(T)];
+            lock(collection) return new List<T>(collection);
         }
 
         public IEnumerable<T> GetEnumerable<T>()
         {
-            return (IEnumerable<T>)ht[typeof(T)];
+            var collection = (List<T>)ht[typeof(T)];
+            lock(collection) return new List<T>(collection);
+            
         }
+
+        public int Count<T>()
+        {
+            return (ht[typeof(T)] as ICollection<T>).Count;
+        }
+
+        public bool Remove<T>(T item)
+        {
+            var collection = (List<T>)ht[typeof(T)];
+            lock (collection) return collection.Remove(item);
+        }
+        public int RemoveAll<T>(Predicate<T> predicate)
+        {
+            var collection = (List<T>)ht[typeof(T)];
+            lock (collection) return collection.RemoveAll(predicate);
+        }
+
     }
 }

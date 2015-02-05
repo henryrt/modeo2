@@ -20,5 +20,7 @@ namespace RTH.Modeo2
         // returns true if the solution is dominated by any of the given Solutions
         bool IsDominated(IEnumerable<ISolution> solns, IEnumerable<IObjective> objs);
 
+        bool Filtered { set; get; }
+
     }
 }

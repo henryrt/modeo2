@@ -8,17 +8,23 @@ using System.Threading.Tasks;
 
 namespace RTH.Modeo2
 {
-    public delegate bool Filter(CollectionManager cm, ISolution soln);
+    public delegate bool Filter(ICollectionManager cm, ISolution soln);
 
     public class BaseSolver : ISolver
     {
         #region instance variables
-        public CollectionManager DataStore { get; } = new CollectionManager();
+        public ICollectionManager DataStore { get; } 
         #endregion
 
         #region constructors
         public BaseSolver()
         {
+            DataStore = new CollectionManager();
+        }
+
+        public BaseSolver(ICollectionManager cm)
+        {
+            DataStore = cm;
         }
         #endregion
 

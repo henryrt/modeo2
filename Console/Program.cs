@@ -11,7 +11,7 @@ namespace RTH.Modeo2
     {
         static void Main(string[] args)
         {
-            BaseSolver solver = new BaseSolver();
+            BaseSolver solver = new BaseSolver(new TimedCollectionManager(new CollectionManager()));
 
             var solutions = new List<ISolution>();
             for (int i = 0; i < 100; i++)
@@ -46,9 +46,11 @@ namespace RTH.Modeo2
 
             //var objs = c.GetEnumerable<IObjective>();
 
+            Console.WriteLine("#Solutions = " + store.Count<ISolution>());
             solver.ApplyFilter(Filter1);
             solver.ApplyFilter(Filter2);
             solver.RemoveFilteredSolutions();
+            Console.WriteLine("#Solutions = " + store.Count<ISolution>());
 
             var solns = store.GetReadOnlyCollection<ISolution>();
             foreach (Solution1 s in solns)
@@ -63,15 +65,38 @@ namespace RTH.Modeo2
                 Console.WriteLine(String.Format(dominated +" "+ s.N));
                 store.Add<ISolution>(new Solution1());
             }
+
+            Console.WriteLine("#Solutions = " + store.Count<ISolution>());
+            ShowSolutions(store.GetEnumerable<ISolution>(), objs);
+
+            solver.RemoveDominatedSolutions();
+            Console.WriteLine("#Solutions = " + store.Count<ISolution>());
+            ShowSolutions(store.GetEnumerable<ISolution>(), objs);
+
+            Console.WriteLine((store as TimedCollectionManager).Log);
         }
 
-        public static bool Filter1(CollectionManager cm, ISolution soln)
+        private static void ShowSolutions(IEnumerable<ISolution> solns, IEnumerable<IObjective> objs)
+        {
+            foreach (Solution1 s in solns)
+            {
+                var dominated = s.IsDominated(solns, objs);
+                var evals = s.Evaluate(objs);
+                foreach (var eval in evals.Values)
+                {
+                    Console.Write(eval.Penalty + " ");
+                }
+
+                Console.WriteLine(String.Format(dominated + " " + s.N));
+            }
+        }
+        public static bool Filter1(ICollectionManager cm, ISolution soln)
         {
             // flag any solutions that have an undesired objective penalty
             var objs = cm.GetEnumerable<IObjective>();
             return objs.Any(obj => soln.Evaluate(obj).Penalty > 11);
         }
-        public static bool Filter2(CollectionManager cm, ISolution soln)
+        public static bool Filter2(ICollectionManager cm, ISolution soln)
         {
             // flag any solutions that have the first objective value < 3
             var objs = cm.GetEnumerable<IObjective>();

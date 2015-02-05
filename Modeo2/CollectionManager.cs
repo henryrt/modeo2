@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace RTH.Modeo2
 {
-    public class CollectionManager
+    public class CollectionManager : ICollectionManager
     {
         // Manages collections in a Hashtable. 
         private Hashtable ht = new Hashtable();

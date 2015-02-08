@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace RTH.Modeo2
 {
+    // a Filter is a method that determines if a solution should be filtered out
     public delegate bool Filter(ICollectionManager cm, ISolution soln);
 
     public class BaseSolver : ISolver
@@ -48,8 +49,9 @@ namespace RTH.Modeo2
             foreach (var f in DataStore.GetEnumerable<Filter>()) ApplyFilter(f);
         }
 
-        public void RemoveFilteredSolutions()
+        public void RemoveFilteredSolutions(bool applyFiltersFirst = false)
         {
+            if (applyFiltersFirst) ApplyFilters();
             DataStore.RemoveAll<ISolution>(new Predicate<ISolution>(s => s.Filtered));
         }
 

@@ -31,25 +31,13 @@ namespace RTH.Modeo2
             store.AddCollection<List<IObjective>, IObjective>(objs);
             store.AddCollection<List<ISolution>, ISolution>(solutions);
 
+
+            Console.WriteLine("#Solutions = " + store.Count<ISolution>());
+
             store.Add<Filter>(Filter1);
             store.Add<Filter>(Filter2);
 
-            //Console.WriteLine(c.GetReadOnlyCollection<IObjective>());
-            //Console.WriteLine(c.GetReadOnlyCollection<ISolution>());
-
-            //var o1 = c.GetReadOnlyCollection<IObjective>();
-            ////o1.Add(new Objective1());
-            //foreach (var o2 in c.GetEnumerable<IObjective>())
-            //{
-            //    Console.WriteLine(o2);
-            //}
-
-            //var objs = c.GetEnumerable<IObjective>();
-
-            Console.WriteLine("#Solutions = " + store.Count<ISolution>());
-            solver.ApplyFilter(Filter1);
-            solver.ApplyFilter(Filter2);
-            solver.RemoveFilteredSolutions();
+            solver.RemoveFilteredSolutions(true);
             Console.WriteLine("#Solutions = " + store.Count<ISolution>());
 
             var solns = store.GetReadOnlyCollection<ISolution>();

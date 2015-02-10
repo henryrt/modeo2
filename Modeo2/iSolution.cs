@@ -21,6 +21,7 @@ namespace RTH.Modeo2
         bool IsDominated(IEnumerable<ISolution> solns, IEnumerable<IObjective> objs);
 
         bool Filtered { set; get; }
+        bool Dominated { set; get; }
 
         // return true if all constraints are met
         bool CheckConstraints(ICollectionManager store);

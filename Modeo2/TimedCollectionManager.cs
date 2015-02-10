@@ -22,9 +22,9 @@ namespace RTH.Modeo2
             Log.AppendLine(FormattedLine("Add", ts));
         }
 
-        public void AddCollection<ICollection, T>(ICollection<T> collection)
+        public void AddCollection<T>(ICollection<T> collection)
         {
-            var ts = Timer(() => DataStore.AddCollection<ICollection, T>(collection));
+            var ts = Timer(() => DataStore.AddCollection<T>(collection));
             Log.AppendLine(FormattedLine("AddCollection", ts));
         }
 
@@ -46,7 +46,10 @@ namespace RTH.Modeo2
 
         public IReadOnlyCollection<T> GetReadOnlyCollection<T>()
         {
-            return DataStore.GetReadOnlyCollection<T>();
+            IReadOnlyCollection<T> ret = null;
+            var ts = Timer(() => { ret = DataStore.GetReadOnlyCollection<T>(); });
+            Log.AppendLine(FormattedLine("GetReadOnlyCollection", ts));
+            return ret;
         }
 
         public bool Remove<T>(T item)
@@ -113,6 +116,11 @@ namespace RTH.Modeo2
             var ts = Timer(() => ret = DataStore.All<T>(condition));
             Log.AppendLine(FormattedLine("All<T>", ts));
             return ret;
+        }
+
+        public void RemoveAll<T>()
+        {
+            DataStore.RemoveAll<T>();
         }
     }
 }

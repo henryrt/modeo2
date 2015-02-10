@@ -18,10 +18,16 @@ namespace RTH.Modeo2
             set;
         }
 
+        public bool Dominated
+        {
+            get; set;
+        }
+
         public void ClearEvaluationCache()
         {
             Evaluations = null;
             Filtered = false;
+            Dominated = false;
         }
 
         public bool Dominates(ISolution soln, ICollectionManager store)
@@ -31,16 +37,22 @@ namespace RTH.Modeo2
         public bool Dominates(ISolution soln, IEnumerable<IObjective> objs)
         {
             // Can not dominate itself
-            if (this.Equals(soln)) return false;
+            if (this == soln) return false;
+
+            // if a different solution is Equal, then it is dominated, i.e. a duplicate
+            if (this.Equals(soln)) return true;
 
             // get Evaluations for each solution
-            var thisEval = Evaluate(objs);
-            var thatEval = soln.Evaluate(objs);
+            var thisEvaluationSet = Evaluate(objs);
+            var thatEvaluationSet = soln.Evaluate(objs);
 
-            foreach (var obj in objs) Console.WriteLine(String.Format("{0}\t{1}", thisEval[obj].Penalty, thatEval[obj].Penalty));
+            //foreach (var obj in objs) Console.WriteLine(String.Format("{0}\t{1}", thisEval[obj].Penalty, thatEval[obj].Penalty));
 
-            //This dominates if ALL its Penalties are less than or equal to That.
-            return objs.All( obj => thisEval[obj].Penalty <= thatEval[obj].Penalty );
+            // do not dominate another solution with identical penalties
+            if (objs.All(obj => thisEvaluationSet[obj].IdenticalPenalty(thatEvaluationSet[obj]))) return false;
+
+            //This dominates if That is worse on all objectives
+            return objs.All(obj => thatEvaluationSet[obj].Worse(thisEvaluationSet[obj]));
             
         }
 
@@ -71,7 +83,9 @@ namespace RTH.Modeo2
 
         public bool IsDominated(IEnumerable<ISolution> solns, IEnumerable<IObjective> objs)
         {
-            return solns.Any(s => s.Dominates(this, objs));
+            // no need to test a solution that is already dominated
+            Dominated = solns.Where(s => !s.Dominated).Any(s => s.Dominates(this, objs));
+            return Dominated;
         }
 
         /// <summary>

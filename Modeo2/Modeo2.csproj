@@ -51,6 +51,7 @@
     <Compile Include="iSolver.cs" />
     <Compile Include="IStopCondition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StopConditions.cs" />
     <Compile Include="TargetObjective.cs" />
     <Compile Include="TimedCollectionManager.cs" />
   </ItemGroup>

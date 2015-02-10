@@ -43,8 +43,7 @@ namespace RTH.Modeo2
                 return collection;
             }
         }
-
-        public void AddCollection<ICollection, T>(ICollection<T> collection)
+        public void AddCollection<T>(ICollection<T> collection)
         {
             foreach (var item in collection) Add<T>(item);
         }
@@ -98,6 +97,21 @@ namespace RTH.Modeo2
         public bool All<T>(Func<T, bool> condition)
         {
             return (ht[typeof(T)] as ICollection<T>)?.All<T>(condition) ?? true;
+        }
+
+        public void RemoveAll<T>()
+        {
+            lock(ht)
+            {
+                var list = ht[typeof(T)] as List<T>;
+                lock(list)
+                {
+                    if (list != null)
+                    {
+                        list.Clear();
+                    }
+                }
+            }
         }
     }
 }

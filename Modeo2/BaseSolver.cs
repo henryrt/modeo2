@@ -18,29 +18,31 @@ namespace RTH.Modeo2
         #endregion
 
         #region constructors
-        public BaseSolver()
+
+        public BaseSolver() : this(1000)  {  }
+
+        public BaseSolver(int defaultTimeout)
         {
             DataStore = new CollectionManager();
+            DataStore.Add<IStopCondition>(new TimerStopCondition(defaultTimeout));
         }
 
-        public BaseSolver(ICollectionManager cm)
+        public BaseSolver(ICollectionManager cm) : this(cm, 1000) { }
+
+        public BaseSolver(ICollectionManager cm, int defaultTimeout)
         {
             DataStore = cm;
+            DataStore.Add<IStopCondition>(new TimerStopCondition(defaultTimeout));
         }
         #endregion
 
-        #region initialization methods
-        #endregion
 
-        #region Properties
-        #endregion
-
-        #region Methods
+        #region Initialization
 
         public void Start()
         {
             // Initialize
-            Initialize<IStopCondition>();
+            InitializeAll<IStopCondition>();
 
             var stop = false;
             while (!stop)
@@ -58,21 +60,38 @@ namespace RTH.Modeo2
             }
         }
 
-        public void Initialize<T>()
+        public void InitializeAll<T>()
         {
             // check that T has an Initialize method
             var method = typeof(T).GetMethod("Initialize");
             if (method != null) foreach (var item in DataStore.GetEnumerable<T>()) method.Invoke(item, null);
         }
+        #endregion
+
+        #region Stopping
         public bool CheckStopConditions()
         {
             return DataStore.Any<IStopCondition>(sc => sc.ShouldStop(DataStore));
         }
+        #endregion
+
+        #region Clear methods
         public void ClearStopConditions()
         {
-            DataStore.RemoveAll<IStopCondition>((sc) => { return true; });
+            DataStore.RemoveAll<IStopCondition>();
         }
+        public void ClearFilters()
+        {
+            DataStore.RemoveAll<Filter>();
+            foreach (var soln in DataStore.GetEnumerable<ISolution>()) soln.Filtered = false;
+        }
+        public void ClearConstraints()
+        {
+            DataStore.RemoveAll<IConstraint>();
+        }
+        #endregion
 
+        #region Filters and Constraints
         public void ApplyFilter(Filter f)
         {
             foreach(var soln in DataStore.GetEnumerable<ISolution>())
@@ -91,6 +110,14 @@ namespace RTH.Modeo2
         {
             return DataStore.All<IConstraint>(c => c.CheckConstraint(soln));
         }
+
+        public void ApplyConstraints()
+        {
+            DataStore.RemoveAll<ISolution>(soln => !CheckConstraints(soln));
+        }
+        #endregion
+
+        #region Add and Remove Solutions
         public void RemoveFilteredSolutions(bool applyFiltersFirst = false)
         {
             if (applyFiltersFirst) ApplyFilters();

@@ -8,6 +8,10 @@ namespace RTH.Modeo2
 {
     public interface ISolver
     {
-        bool AddSolution(ISolution soln); 
+        // Will check constraints, evaluate solution and add to population
+        bool AddSolution(ISolution soln);
+
+        // Removes any solutions that do not meet constraints
+        void ApplyConstraints();
     }
 }

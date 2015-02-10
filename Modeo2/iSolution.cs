@@ -22,5 +22,8 @@ namespace RTH.Modeo2
 
         bool Filtered { set; get; }
 
+        // return true if all constraints are met
+        bool CheckConstraints(ICollectionManager store);
+
     }
 }

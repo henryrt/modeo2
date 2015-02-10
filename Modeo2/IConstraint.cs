@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace RTH.Modeo2
 {
-    public interface ISolver
+    public interface IConstraint
     {
-        bool AddSolution(ISolution soln); 
+        // return true if solution meets constraint
+        bool CheckConstraint(ISolution soln);
     }
 }

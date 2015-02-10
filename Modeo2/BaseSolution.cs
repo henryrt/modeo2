@@ -21,8 +21,13 @@ namespace RTH.Modeo2
         public void ClearEvaluationCache()
         {
             Evaluations = null;
+            Filtered = false;
         }
 
+        public bool Dominates(ISolution soln, ICollectionManager store)
+        {
+            return Dominates(soln, store.GetEnumerable<IObjective>());
+        }
         public bool Dominates(ISolution soln, IEnumerable<IObjective> objs)
         {
             // Can not dominate itself
@@ -31,6 +36,8 @@ namespace RTH.Modeo2
             // get Evaluations for each solution
             var thisEval = Evaluate(objs);
             var thatEval = soln.Evaluate(objs);
+
+            foreach (var obj in objs) Console.WriteLine(String.Format("{0}\t{1}", thisEval[obj].Penalty, thatEval[obj].Penalty));
 
             //This dominates if ALL its Penalties are less than or equal to That.
             return objs.All( obj => thisEval[obj].Penalty <= thatEval[obj].Penalty );
@@ -43,6 +50,10 @@ namespace RTH.Modeo2
             return (Evaluations ?? (Evaluations = ComputeEvaluations(objs)));
         }
 
+        public Dictionary<IObjective, Evaluation> Evaluate(ICollectionManager store)
+        {
+            return (Evaluations ?? (Evaluations = ComputeEvaluations(store.GetEnumerable<IObjective>())));
+        }
         public Dictionary<IObjective, Evaluation> ComputeEvaluations(IEnumerable<IObjective> objs)
         {
             var e = new Dictionary<IObjective, Evaluation>();
@@ -75,6 +86,11 @@ namespace RTH.Modeo2
         public bool IsDuplicate(IEnumerable<ISolution> solns)
         {
             return solns.Any(s => IsDuplicate(s));
+        }
+
+        public bool CheckConstraints(ICollectionManager store)
+        {
+            return store.All<IConstraint>(c => c.CheckConstraint(this));
         }
     }
 }

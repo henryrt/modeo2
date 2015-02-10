@@ -24,15 +24,20 @@ namespace RTH.Modeo2
             }
 
             var objs = new List<IObjective>();
-            for (int i = 0; i < 15; i++) { objs.Add(new TargetObjective(i) { ValueProvider = (parm) => { return ((Solution1)parm).N; } }); }
+            for (int i = 0; i < 15; i++) { objs.Add(new TargetObjective(i) { ValueProvider = (s) => { return ((Solution1)s).N; } }); }
 
  
             var store = solver.DataStore;
             store.AddCollection<List<IObjective>, IObjective>(objs);
-            store.AddCollection<List<ISolution>, ISolution>(solutions);
-
+            // store.AddCollection<List<ISolution>, ISolution>(solutions);
+            store.Add<IAlgorithm>(new CreateAlgorithm());
+            store.Add<IStopCondition>(new StopCondition(1000));
+            store.Add<IStopCondition>(new TimerStopCondition(100));
+            store.Add<IConstraint>(new Constraint1());
+            solver.Start();
 
             Console.WriteLine("#Solutions = " + store.Count<ISolution>());
+            //ShowSolutions(store.GetEnumerable<ISolution>(), store.GetEnumerable<IObjective>());
 
             store.Add<Filter>(Filter1);
             store.Add<Filter>(Filter2);
@@ -61,6 +66,12 @@ namespace RTH.Modeo2
             Console.WriteLine("#Solutions = " + store.Count<ISolution>());
             ShowSolutions(store.GetEnumerable<ISolution>(), objs);
 
+            for (int i=0; i<10; i++)
+            {
+                var s = store.GetRandom<ISolution>() as Solution1;
+                ShowPenalties(s.Evaluate(objs).Values);
+                Console.WriteLine(s.N);
+            }
             Console.WriteLine((store as TimedCollectionManager).Log);
         }
 
@@ -70,14 +81,18 @@ namespace RTH.Modeo2
             {
                 var dominated = s.IsDominated(solns, objs);
                 var evals = s.Evaluate(objs);
-                foreach (var eval in evals.Values)
-                {
-                    Console.Write(eval.Penalty + " ");
-                }
-
+                ShowPenalties(evals.Values);
                 Console.WriteLine(String.Format(dominated + " " + s.N));
             }
         }
+        private static void ShowPenalties(IEnumerable<Evaluation> evals)
+        {
+            foreach (var eval in evals)
+            {
+                Console.Write(eval.Penalty + " ");
+            }
+        }
+
         public static bool Filter1(ICollectionManager cm, ISolution soln)
         {
             // flag any solutions that have an undesired objective penalty
@@ -143,6 +158,66 @@ namespace RTH.Modeo2
         {
             bool ret = (this.N == ((Solution1)soln).N);
             return ret;
+        }
+    }
+
+    class CreateAlgorithm : IAlgorithm
+    {
+       
+        public void Run(ISolver solver)
+        {
+            // create a new solution and add it
+            ISolution s = new Solution1();
+            solver.AddSolution(s);
+        }
+
+ 
+    }
+
+    class StopCondition : IStopCondition
+    {
+        private int N;
+
+        public StopCondition(int n)
+        {
+            N = n;
+        }
+
+        public void Initialize()
+        {
+        }
+
+        public bool ShouldStop(ICollectionManager cm)
+        {
+            return (cm.Count<ISolution>() >= N);
+        }
+    }
+
+    class TimerStopCondition : IStopCondition
+    {
+        int mSec = 0;
+        DateTime stopTime;
+
+        public TimerStopCondition(int msec)
+        {
+            mSec = msec;
+        }
+        public void Initialize()
+        {
+            stopTime = DateTime.Now.AddMilliseconds(mSec);
+        }
+
+        public bool ShouldStop(ICollectionManager cm)
+        {
+            return DateTime.Now > stopTime;
+        }
+    }
+
+    class Constraint1 : IConstraint
+    {
+        public bool CheckConstraint(ISolution soln)
+        {
+            return ((Solution1)soln).N < 4;
         }
     }
 }

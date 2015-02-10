@@ -76,5 +76,43 @@ namespace RTH.Modeo2
         {
             return String.Format("{0,-20}: {1} ticks.", method, ticks);
         }
+
+        public T GetRandom<T>()
+        {
+            T ret = default(T);
+            var ts = Timer(() => { ret = DataStore.GetRandom<T>(); });
+            Log.AppendLine(FormattedLine("GetRandom", ts));
+            return ret;
+        }
+
+        public Guid AddKeyed<T>(T item)
+        {
+            Guid ret = default(Guid);
+            var ts = Timer(() => { ret = DataStore.AddKeyed<T>(item); });
+            Log.AppendLine(FormattedLine("AddKeyed<T>", ts));
+            return ret;
+        }
+
+        public void AddKeyed<K, T>(K key, T item)
+        {
+            var ts = Timer( () => DataStore.AddKeyed<K, T>(key, item) );
+            Log.AppendLine(FormattedLine("AddKeyed<K,T>", ts));
+        }
+
+        public bool Any<T>(Func<T, bool> condition)
+        {
+            var ret = false;
+            var ts = Timer(() => ret = DataStore.Any<T>(condition));
+            Log.AppendLine(FormattedLine("Any<T>", ts));
+            return ret;
+        }
+
+        public bool All<T>(Func<T, bool> condition)
+        {
+            var ret = false;
+            var ts = Timer(() => ret = DataStore.All<T>(condition));
+            Log.AppendLine(FormattedLine("All<T>", ts));
+            return ret;
+        }
     }
 }

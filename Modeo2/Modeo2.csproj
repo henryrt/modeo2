@@ -43,10 +43,13 @@
     <Compile Include="BaseSolver.cs" />
     <Compile Include="CollectionManager.cs" />
     <Compile Include="Evaluation.cs" />
+    <Compile Include="IAlgorithm.cs" />
     <Compile Include="ICollectionManager.cs" />
+    <Compile Include="IConstraint.cs" />
     <Compile Include="iObjective.cs" />
     <Compile Include="iSolution.cs" />
     <Compile Include="iSolver.cs" />
+    <Compile Include="IStopCondition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TargetObjective.cs" />
     <Compile Include="TimedCollectionManager.cs" />

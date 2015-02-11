@@ -11,13 +11,15 @@ namespace RTH.Modeo2
     {
         static void Main(string[] args)
         {
-            BaseSolver solver = new BaseSolver(new TimedCollectionManager(new CollectionManager()), 25);
+            new Transportation().Run(args);
+          /*
+            BaseSolver solver = new BaseSolver(new TimedCollectionManager(new CollectionManager()), 250);
             var store = solver.DataStore;
 
             var objs = new List<IObjective>()
             {
-                new TargetObjective(4) { ValueProvider = (s) => { return ((Solution1)s).N; } },
-                new TargetObjective(9) { ValueProvider = (s) => { return ((Solution1)s).N; } }
+                new TargetObjective("Targ 4", 4) { ValueProvider = (s) => { return ((Solution1)s).N; } },
+                new TargetObjective("Targ 9", 9) { ValueProvider = (s) => { return ((Solution1)s).N; } }
             };
 
             store.AddCollection<IObjective>(objs);
@@ -58,10 +60,10 @@ namespace RTH.Modeo2
             ShowSolutions(store.GetEnumerable<ISolution>(), objs);
 
 
-            store.Add<IConstraint>(new MustBeLessThanSixConstraint());
-            solver.ApplyConstraints();
-            Console.WriteLine("#Solutions = " + store.Count<ISolution>());
-            ShowSolutions(store.GetEnumerable<ISolution>(), objs);
+            //store.Add<IConstraint>(new MustBeLessThanSixConstraint());
+            //solver.ApplyConstraints();
+            //Console.WriteLine("#Solutions = " + store.Count<ISolution>());
+            //ShowSolutions(store.GetEnumerable<ISolution>(), objs);
 
             //for (int i=0; i<10; i++)
             //{
@@ -70,6 +72,14 @@ namespace RTH.Modeo2
             //    Console.WriteLine(s.N);
             //}
             //Console.WriteLine((store as TimedCollectionManager).Log);
+
+            var grid = solver.getGrid();
+            foreach (string[] row in grid)
+            {
+                for (var ix = 0; ix < row.Length; ix++) Console.Write(row[ix]+'\t');
+                Console.WriteLine();
+            }
+            */
         }
 
         private static void ShowSolutions(IEnumerable<ISolution> solns, IEnumerable<IObjective> objs)
@@ -117,6 +127,7 @@ namespace RTH.Modeo2
 
     class Objective1 : IObjective
     {
+        public string Name {  get { return "Objective1"; } }
         public double Value(ISolution soln)
         {
             return Math.Abs((soln as Solution1).N - 5);
@@ -134,6 +145,8 @@ namespace RTH.Modeo2
     }
     class Objective2 : IObjective
     {
+        public string Name { get { return "Objective2"; } }
+
         public double Value(ISolution soln)
         {
             return Math.Abs((soln as Solution1).N - 8);

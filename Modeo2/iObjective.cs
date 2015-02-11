@@ -10,5 +10,7 @@
 
         // returns (int) the Penalty the given Value incurs
         int Penalty(double val);
+
+        string Name { get; }
     }
 }

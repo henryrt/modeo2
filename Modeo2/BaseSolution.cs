@@ -52,7 +52,8 @@ namespace RTH.Modeo2
             if (objs.All(obj => thisEvaluationSet[obj].IdenticalPenalty(thatEvaluationSet[obj]))) return false;
 
             //This dominates if That is worse on all objectives
-            return objs.All(obj => thatEvaluationSet[obj].Worse(thisEvaluationSet[obj]));
+            return objs.All(obj => thatEvaluationSet[obj].WorseOrEqual(thisEvaluationSet[obj]));
+
             
         }
 

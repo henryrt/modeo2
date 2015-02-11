@@ -17,9 +17,9 @@ namespace RTH.Modeo2
         }
 
         // this Evaluation is worse than that one.
-        public bool Worse(Evaluation that)
+        public bool WorseOrEqual(Evaluation that)
         {
-            return this.Penalty > that.Penalty;
+            return this.Penalty >= that.Penalty;
         }
     }
 }

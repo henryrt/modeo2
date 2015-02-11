@@ -141,5 +141,32 @@ namespace RTH.Modeo2
 
         #endregion
 
+        public ArrayList getGrid()
+        {
+            var al = new ArrayList(DataStore.Count<ISolution>() + 1);
+
+            var objs = DataStore.GetEnumerable<IObjective>();
+
+            var ar = new string[objs.Count()];
+            //header row
+            var i = 0;
+            foreach (var obj in objs) ar[i++] = obj.Name;
+            al.Add(ar);
+            foreach (var soln in DataStore.GetEnumerable<ISolution>())
+            {
+                ar = new string[objs.Count()];
+                i = 0;
+                foreach (var obj in objs)
+                {
+                    var eval = soln.Evaluate(obj);
+                    //ar[i++] = eval.Value.ToString() + " (" + eval.Penalty.ToString() + ")";
+                    ar[i++] = eval.Value.ToString();
+                }
+                al.Add(ar);
+            }
+
+            return al;
+        }
+
     }
 }

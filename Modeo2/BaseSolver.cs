@@ -34,6 +34,7 @@ namespace RTH.Modeo2
             DataStore = cm;
             DataStore.Add<IStopCondition>(new TimerStopCondition(defaultTimeout));
         }
+
         #endregion
 
 
@@ -143,7 +144,12 @@ namespace RTH.Modeo2
 
         public ArrayList getGrid()
         {
-            var al = new ArrayList(DataStore.Count<ISolution>() + 1);
+            return getGrid(DataStore.GetEnumerable<ISolution>());
+        }
+
+        public ArrayList getGrid(IEnumerable<ISolution> results)
+        {
+            var al = new ArrayList(results.Count() + 1);
 
             var objs = DataStore.GetEnumerable<IObjective>();
 
@@ -152,7 +158,7 @@ namespace RTH.Modeo2
             var i = 0;
             foreach (var obj in objs) ar[i++] = obj.Name;
             al.Add(ar);
-            foreach (var soln in DataStore.GetEnumerable<ISolution>())
+            foreach (var soln in results)
             {
                 ar = new string[objs.Count()];
                 i = 0;

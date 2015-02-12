@@ -45,16 +45,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AllOrdersShippedConstraint.cs" />
+    <Compile Include="CombineLoadsAlgorithm.cs" />
     <Compile Include="CostObjective.cs" />
     <Compile Include="DataModel.cs" />
+    <Compile Include="GenerateByDueDate.cs" />
     <Compile Include="GenerateByVehicleType.cs" />
     <Compile Include="LateOrdersObjective.cs" />
+    <Compile Include="MoveDeparturesAlgorithm.cs" />
     <Compile Include="NoEmptyShipmentConstraint.cs" />
     <Compile Include="NumberOfVehiclesObjective.cs" />
     <Compile Include="ProblemStatement.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TransportationPlan.cs" />
     <Compile Include="TransportationSolver.cs" />
+    <Compile Include="TripsOnStartDateObjective.cs" />
+    <Compile Include="VehicleCountByTypeObjective.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

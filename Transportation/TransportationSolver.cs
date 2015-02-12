@@ -9,5 +9,9 @@ namespace RTH.Modeo2
     public class TransportationSolver : BaseSolver
     {
         public ProblemStatement Problem;
+
+        public TransportationSolver() : base() { }
+
+        public TransportationSolver(int msec) : base(msec) { }
     }
 }

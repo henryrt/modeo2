@@ -10,18 +10,19 @@ namespace RTH.Modeo2
     {
         string VehicleName;
 
+        // ship everything by a single type of carrier      
+
         public GenerateByVehicleType(string vehicleName)
         {
             VehicleName = vehicleName;
         }
         public void Run(ISolver solver)
         {
-            // ship everything by Express carrier      
             var problem = (solver as TransportationSolver).Problem;
 
             var plan = new TransportationPlan(problem);
 
-            var express = problem.VehicleTypes.Where(v => v.Name == VehicleName).First();
+            var vehicle = problem.VehicleTypes.Where(v => v.Name == VehicleName).First();
 
             bool done = false;
             while (!done) {
@@ -35,8 +36,8 @@ namespace RTH.Modeo2
                         {
                             DepartureDate = problem.StartDate,
                             Destination = order.Destination,
-                            Vehicle = express,
-                            Shipments = new List<Shipment>() { new Shipment() { Order = order, Tons = Math.Min(tons, express.Capacity) } }
+                            Vehicle = vehicle,
+                            Shipments = new List<Shipment>() { new Shipment() { Order = order, Tons = Math.Min(tons, vehicle.Capacity) } }
                         };
                         tons -= trip.Shipments[0].Tons;
                         plan.AddTrip(trip);

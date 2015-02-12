@@ -26,6 +26,8 @@ namespace RTH.Modeo2
         }
     }
 
+    // Trip records can be used by more than one Plan
+    // Do not modify them once they are in a plan
     public class Trip
     {
         public Destination Destination;
@@ -36,19 +38,37 @@ namespace RTH.Modeo2
         public double Cost;
         public DateTime ArrivalDate;
         public int Tons;
-        private Rate Rate;
+        public bool InPlan = false;
+        public Rate Rate;
 
+
+        // call FindRate once Destination, DepartureDate, and VehicleType are set.
         public void FindRate()
         {
             Rate = Destination.Rates.Find(r => r.VehicleType == Vehicle);
             // compute arrival
             ArrivalDate = DepartureDate.Add(Rate.Duration);
         }
+
+        // call Compute once Shipments are set.
         public void Compute()
         {
             Tons = Shipments.Sum(s => s.Tons);
             Cost = Rate.CostFunction(Tons);
         } 
+
+        // creates an new identical Trip with a different departure date
+        public Trip MoveDepartureDate(DateTime newDepartureDate)
+        {
+            var trip = new Trip()
+            {
+                DepartureDate = newDepartureDate,
+                Destination = this.Destination,
+                Vehicle = this.Vehicle,
+                Shipments = this.Shipments                
+            };
+            return trip;
+        }
 
     }
     public class Shipment

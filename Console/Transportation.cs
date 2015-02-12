@@ -10,7 +10,7 @@ namespace RTH.Modeo2
     {
         public void Run(string[] args)
         {
-            var solver = new TransportationSolver();
+            var solver = new TransportationSolver(2500);
             solver.Problem = new ProblemStatement();
             LoadProblem(solver.Problem);
 
@@ -21,21 +21,38 @@ namespace RTH.Modeo2
             //var alg = solver.DataStore.GetEnumerable<IAlgorithm>().First();
             InitializePopulation(solver);
 
-            //solver.Start();
-            ShowGrid(solver);
-            solver.RemoveDominatedSolutions();
-            ShowGrid(solver);
+            solver.Start();
 
+            solver.RemoveDominatedSolutions();
+
+            // sort by first objective
+            var obj = solver.DataStore.GetReadOnlyCollection<IObjective>().ElementAt(0);
+            var results = solver.DataStore.GetEnumerable<ISolution>().OrderByDescending(s => s.Evaluate(obj).Value);
+
+            ShowGrid(solver, results);
+
+        }
+
+        private void ShowGrid(BaseSolver solver, IOrderedEnumerable<ISolution> results)
+        {
+            DisplayResults(solver.getGrid(results));
         }
 
         private static void ShowGrid(TransportationSolver solver)
         {
             var grid = solver.getGrid();
+
+            DisplayResults(grid);
+        }
+
+        private static void DisplayResults(System.Collections.ArrayList grid)
+        {
             foreach (string[] row in grid)
             {
                 for (var ix = 0; ix < row.Length; ix++) Console.Write("{0,-12}", row[ix]);
                 Console.WriteLine();
             }
+            Console.WriteLine(grid.Count - 1 + " solutions.");
         }
 
         private void InitializePopulation(TransportationSolver solver)
@@ -47,6 +64,9 @@ namespace RTH.Modeo2
                 new GenerateByVehicleType("Sm Truck").Run(solver);
                 new GenerateByVehicleType("Lg Truck").Run(solver);
                 new GenerateByVehicleType("Railcar").Run(solver);
+
+                new GenerateByDueDate("").Run(solver);
+
             }
         }
 
@@ -58,12 +78,19 @@ namespace RTH.Modeo2
         public virtual void LoadStrategy(TransportationSolver solver)
         {
             // add objectives
-            solver.DataStore.Add<IObjective>(new NumberOfVehiclesObjective());
-            solver.DataStore.Add<IObjective>(new CostObjective());
             solver.DataStore.Add<IObjective>(new LateOrdersObjective());
+            solver.DataStore.Add<IObjective>(new NumberOfVehiclesObjective());
+            solver.DataStore.Add<IObjective>(new TripsOnStartDateObjective());
+            solver.DataStore.Add<IObjective>(new CostObjective());
+
+            solver.DataStore.Add<IObjective>(new VehicleCountByTypeObjective() { Name = "Railcar" });
+            solver.DataStore.Add<IObjective>(new VehicleCountByTypeObjective() { Name = "Sm Truck" });
+            solver.DataStore.Add<IObjective>(new VehicleCountByTypeObjective() { Name = "Lg Truck" });
+            solver.DataStore.Add<IObjective>(new VehicleCountByTypeObjective() { Name = "Express" });
 
             //add algorithms
-            //solver.DataStore.Add<IAlgorithm>(new ExpressAlgorithm());
+            solver.DataStore.Add<IAlgorithm>(new CombineLoadsAlgorithm());
+            solver.DataStore.Add<IAlgorithm>(new MoveDeparturesAlgorithm());
 
             //add constraints
             solver.DataStore.Add<IConstraint>(new AllOrdersShippedConstraint());

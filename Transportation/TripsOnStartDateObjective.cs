@@ -6,14 +6,21 @@ using System.Threading.Tasks;
 
 namespace RTH.Modeo2
 {
-    public class CostObjective : IObjective
+    public class TripsOnStartDateObjective : IObjective
     {
-        public string Name { get { return "Cost"; } }
-        //public int Scale;
+        public string Name
+        {
+            get
+            {
+                return "StartDateVeh";
+            }
+        }
 
         public int Penalty(double val)
         {
-            return Convert.ToInt32(val);
+
+            // no penalty for less than or equal to 10
+            return Math.Max(0, Convert.ToInt32(val) - 10);
         }
 
         public int Penalty(ISolution soln)
@@ -24,9 +31,9 @@ namespace RTH.Modeo2
         public double Value(ISolution soln)
         {
             var plan = soln as TransportationPlan;
-            double cost = 0.0;
-            foreach (var trip in plan.Trips) cost += trip.Cost;
-            return cost;
+            var start = plan.Problem.StartDate;
+
+            return plan.Trips.Where(trip => trip.DepartureDate == start).Count();
         }
     }
 }

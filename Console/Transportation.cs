@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Console;
+
+
 namespace RTH.Modeo2
 {
     public class Transportation
@@ -20,17 +23,59 @@ namespace RTH.Modeo2
 
             //var alg = solver.DataStore.GetEnumerable<IAlgorithm>().First();
             InitializePopulation(solver);
+            ShowGrid(solver);
 
-            solver.Start();
+            IObjective objViolations = GetObjective(solver, "Violation");
+            IObjective objCost = GetObjective(solver, "Cost");
+            IObjective objLate = GetObjective(solver, "#Late");
 
-            solver.RemoveDominatedSolutions();
+            for (int i = 0; i < 10; i++)
+            {
+                solver.Start(100);
+                //ShowGrid(solver);
+                solver.RemoveDominatedSolutions();
+                Error.WriteLine("Iteration " + i);
+            }
 
+            WriteLine("Filtered = " + solver.DataStore.GetEnumerable<ISolution>().Where(s => s.Filtered).Count());
+            if (objViolations != null)
+            {
+                solver.ApplyFilter((cm, soln) => soln.Evaluate(objViolations).Penalty > 3);
+                WriteLine("Filtered = " + solver.DataStore.GetEnumerable<ISolution>().Where(s => s.Filtered).Count());
+            }
+            if (objCost != null && objLate != null)
+            {
+                solver.ApplyFilter((cm, soln) => (soln.Evaluate(objCost).Value > 154000) && soln.Evaluate(objLate).Value > 5);
+                WriteLine("Filtered = " + solver.DataStore.GetEnumerable<ISolution>().Where(s => s.Filtered).Count());
+            }
+            solver.RemoveFilteredSolutions();
+            WriteLine("Filtered = " + solver.DataStore.GetEnumerable<ISolution>().Where(s => s.Filtered).Count());
+
+
+
+            //solver.RemoveDominatedSolutions();
             // sort by first objective
             var obj = solver.DataStore.GetReadOnlyCollection<IObjective>().ElementAt(0);
-            var results = solver.DataStore.GetEnumerable<ISolution>().OrderByDescending(s => s.Evaluate(obj).Value);
+            var results = solver.DataStore.GetEnumerable<ISolution>().OrderBy(s => s.Evaluate(obj).Value);
 
             ShowGrid(solver, results);
 
+            int counter = 1;
+            foreach (var plan in solver.DataStore.GetEnumerable<ISolution>())
+            {
+                WriteLine("SOLUTION " + counter + " ===========================================");
+                WriteLine(plan);
+                WriteLine("SOLUTION " + counter + " ===========================================");
+                Console.WriteLine((plan as TransportationPlan).OutputByOrder());
+                WriteLine("SOLUTION " + counter + " ===========================================");
+                counter++;
+            }
+
+        }
+
+        private static IObjective GetObjective(TransportationSolver solver, string name)
+        {
+            return solver.DataStore.GetEnumerable<IObjective>().Where(obj2 => obj2.Name == name).FirstOrDefault();
         }
 
         private void ShowGrid(BaseSolver solver, IOrderedEnumerable<ISolution> results)
@@ -47,12 +92,13 @@ namespace RTH.Modeo2
 
         private static void DisplayResults(System.Collections.ArrayList grid)
         {
+            var i = 0;
             foreach (string[] row in grid)
             {
-                for (var ix = 0; ix < row.Length; ix++) Console.Write("{0,-12}", row[ix]);
-                Console.WriteLine();
+                for (var ix = 0; ix < row.Length; ix++) Write("{0,-12}", row[ix]);
+                WriteLine(" "+i++);
             }
-            Console.WriteLine(grid.Count - 1 + " solutions.");
+            WriteLine(grid.Count - 1 + " solutions.");
         }
 
         private void InitializePopulation(TransportationSolver solver)
@@ -79,6 +125,7 @@ namespace RTH.Modeo2
         {
             // add objectives
             solver.DataStore.Add<IObjective>(new LateOrdersObjective());
+            solver.DataStore.Add<IObjective>(new CustomerViolationsObjective());
             solver.DataStore.Add<IObjective>(new NumberOfVehiclesObjective());
             solver.DataStore.Add<IObjective>(new TripsOnStartDateObjective());
             solver.DataStore.Add<IObjective>(new CostObjective());
@@ -167,7 +214,26 @@ namespace RTH.Modeo2
                 new Order() { ID = "1009", Customer=Marsh, Destination = Richmond, DueDate = start.AddDays(4), Tons = 44 },
                 new Order() { ID = "1010", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(1), Tons = 102 },
                 new Order() { ID = "1011", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(2), Tons = 67 },
-                new Order() { ID = "1012", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(3), Tons = 15 }
+                new Order() { ID = "1012", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(3), Tons = 15 },
+                new Order() { ID = "A00332", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(1), Tons = 3 },
+                new Order() { ID = "A00333", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(1), Tons = 2 },
+                new Order() { ID = "A00334", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(1), Tons = 1 },
+                new Order() { ID = "A00335", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(1), Tons = 8 },
+                new Order() { ID = "A00336", Customer=Bronte, Destination = Richmond, DueDate = start.AddDays(1), Tons = 11 },
+                new Order() { ID = "A00337", Customer=Bronte, Destination = Richmond, DueDate = start.AddDays(1), Tons = 9 },
+                new Order() { ID = "B00332", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(2), Tons = 3 },
+                new Order() { ID = "B00333", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(2), Tons = 2 },
+                new Order() { ID = "B00334", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(2), Tons = 1 },
+                new Order() { ID = "B00335", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(2), Tons = 8 },
+                new Order() { ID = "B00336", Customer=Bronte, Destination = Richmond, DueDate = start.AddDays(2), Tons = 12 },
+                new Order() { ID = "B00337", Customer=Bronte, Destination = Richmond, DueDate = start.AddDays(2), Tons = 7 },
+                new Order() { ID = "C00332", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(3), Tons = 3 },
+                new Order() { ID = "C00333", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(3), Tons = 4 },
+                new Order() { ID = "C00334", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(3), Tons = 5 },
+                new Order() { ID = "C00335", Customer=Bronte, Destination = NYC, DueDate = start.AddDays(3), Tons = 5 },
+                new Order() { ID = "C00336", Customer=Bronte, Destination = Richmond, DueDate = start.AddDays(3), Tons = 6 },
+                new Order() { ID = "C00337", Customer=Bronte, Destination = Richmond, DueDate = start.AddDays(3), Tons = 3 }
+
             };
 
 

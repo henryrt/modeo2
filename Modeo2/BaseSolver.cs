@@ -40,12 +40,13 @@ namespace RTH.Modeo2
 
         #region Initialization
 
-        public void Start()
+        public void Start(int iterations)
         {
             // Initialize
             InitializeAll<IStopCondition>();
 
             var stop = false;
+            var counter = 0;
             while (!stop)
             {
                 // loop through each algorithm then test conditions to stop
@@ -58,8 +59,10 @@ namespace RTH.Modeo2
                         break;
                     }
                 }
+                if (counter++ == iterations) return;
             }
         }
+        public void Start() { Start(int.MaxValue); }
 
         public void InitializeAll<T>()
         {

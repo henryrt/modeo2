@@ -47,6 +47,7 @@
     <Compile Include="AllOrdersShippedConstraint.cs" />
     <Compile Include="CombineLoadsAlgorithm.cs" />
     <Compile Include="CostObjective.cs" />
+    <Compile Include="CustomerViolationsObjective.cs" />
     <Compile Include="DataModel.cs" />
     <Compile Include="GenerateByDueDate.cs" />
     <Compile Include="GenerateByVehicleType.cs" />

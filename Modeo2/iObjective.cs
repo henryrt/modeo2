@@ -12,5 +12,9 @@
         int Penalty(double val);
 
         string Name { get; }
+
+        System.Type DataType { get; }
+        string Format { set; get; }
+
     }
 }

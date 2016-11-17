@@ -84,6 +84,11 @@ namespace RTH.Modeo2
         public Customer Customer;
         public Destination Destination;
         public DateTime DueDate;
+
+        public override string ToString()
+        {
+            return ID + ": " + Customer.Name + " (" + Destination.Name + ") " + Tons + " tons, due " + DueDate;
+        }
     }
 
     public class Customer

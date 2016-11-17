@@ -13,6 +13,8 @@ namespace RTH.Modeo2
     public class TargetObjective : IObjective
     {
         public string Name { get; }
+        public Type DataType { get { return typeof(double); } }
+        public string Format { get; set; } = "999999.##";
 
         private readonly double target;
         private readonly double underPenaltyFactor;

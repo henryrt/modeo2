@@ -40,7 +40,7 @@ namespace RTH.Modeo2
 
         #region Initialization
 
-        public void Start(int iterations)
+        public void Start(int iterations = int.MaxValue)
         {
             // Initialize
             InitializeAll<IStopCondition>();
@@ -62,7 +62,7 @@ namespace RTH.Modeo2
                 if (counter++ == iterations) return;
             }
         }
-        public void Start() { Start(int.MaxValue); }
+        //public void Start() { Start(int.MaxValue); }
 
         public void InitializeAll<T>()
         {
@@ -96,6 +96,12 @@ namespace RTH.Modeo2
         #endregion
 
         #region Filters and Constraints
+
+        public void AddFilter(Filter f)
+        {
+            DataStore.Add<Filter>(f);
+        }
+
         public void ApplyFilter(Filter f)
         {
             foreach(var soln in DataStore.GetEnumerable<ISolution>())
@@ -139,15 +145,61 @@ namespace RTH.Modeo2
         {
             if (!CheckConstraints(soln)) return false;
             soln.Evaluate(DataStore.GetEnumerable<IObjective>());
+
+            // check for duplicates
+            if (DataStore.GetEnumerable<ISolution>().Any<ISolution>(s => s.Equals(soln))) return false;
+
             DataStore.Add<ISolution>(soln);
             return true;
         }
 
         #endregion
 
+        #region tradeoffs
+
+        public List<ISolution> AnalyzeTradeoff(IObjective obj1, IObjective obj2)
+        {
+            // need non-dominated set on these two objectives
+            var objs = new List<IObjective>();
+            objs.Add(obj1);
+            objs.Add(obj2);
+            var solns = DataStore.GetEnumerable<ISolution>();
+            var result = solns.Where(s => !s.IsDominated(solns, objs)).ToList();
+            return result;
+        }
+
+        public void Keep(IEnumerable<ISolution> solns)
+        {
+            //keeps only the soultions that are passed in
+            DataStore.RemoveAll<ISolution>(new Predicate<ISolution>(s => !solns.Contains(s)));
+        }
+        public List<TradeoffSummary> TradeoffSummaries(IObjective obj1, IObjective obj2)
+        {
+            var solns = AnalyzeTradeoff(obj1, obj2);
+            var q = from s in solns
+                    group s by new { Objective1Value = s.Evaluate(obj1).Value, Objective2Value = s.Evaluate(obj2).Value }
+                    into g
+                    select new TradeoffSummary { Objective1 = obj1, Objective2 = obj2, Objective1Value = g.Key.Objective1Value, Objective2Value = g.Key.Objective2Value, Count = g.Count() };
+            return q.OrderBy(t => t.Objective1Value).ToList();
+        }
+        #endregion
+
         public ArrayList getGrid()
         {
             return getGrid(DataStore.GetEnumerable<ISolution>());
+        }
+
+        public ArrayList getGrid(string sortByObjName, IEnumerable<ISolution> solns)
+        {
+            var obj = DataStore.GetEnumerable<IObjective>().Where(o => o.Name == sortByObjName).FirstOrDefault() as IObjective;
+
+            var results = solns.OrderBy(s => s.Evaluate(obj).Value);
+
+            return getGrid(results);
+        }
+        public ArrayList getGrid(string sortByObjName)
+        {
+            return getGrid(sortByObjName, DataStore.GetEnumerable<ISolution>());
         }
 
         public ArrayList getGrid(IEnumerable<ISolution> results)

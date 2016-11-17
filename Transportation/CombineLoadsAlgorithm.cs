@@ -110,7 +110,7 @@ namespace RTH.Modeo2
             newPlan.AddTrip(newTrip);
             if (!solver.AddSolution(newPlan))
             {
-                Console.WriteLine("ERROR: New Solution failed constraint.");
+                Console.WriteLine("ERROR: New Solution is duplicate or failed constraint.");
             }
         }
     }

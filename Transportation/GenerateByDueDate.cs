@@ -8,11 +8,11 @@ namespace RTH.Modeo2
 {
     public class GenerateByDueDate : IAlgorithm
     {
-        string VehicleName;
+        //string VehicleName;
 
-        public GenerateByDueDate(string vehicleName)
+        public GenerateByDueDate()
         {
-            VehicleName = vehicleName;
+            //VehicleName = vehicleName;
         }
         public void Run(ISolver solver)
         {

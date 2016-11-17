@@ -27,20 +27,40 @@ namespace RTH.Modeo2
             trip.InPlan = true;
         }
 
+        //cache the ToString
+        private string _tostring = null;
+
         public override string ToString()
         {
             // output a human readable plan
 
-            var buf = new StringBuilder();
-
-            var tripNum = 1;
-            // order the trips by departure date
-            foreach(var trip in Trips.OrderBy(t => t.DepartureDate).ThenBy(t => t.Destination.Name).ThenBy(t => t.Vehicle.Name).ThenByDescending(t => t.Tons))
+            if (_tostring == null)
             {
-                buf.AppendFormat("Vehicle# {0,-3}\n", tripNum++);
-                buf.AppendLine(Output(trip));
+                var buf = new StringBuilder();
+
+                var tripNum = 1;
+                // order the trips by departure date
+                foreach (var trip in Trips.OrderBy(t => t.DepartureDate).ThenBy(t => t.Destination.Name).ThenBy(t => t.Vehicle.Name).ThenByDescending(t => t.Tons))
+                {
+                    buf.AppendFormat("Vehicle# {0,-3}\n", tripNum++);
+                    buf.AppendLine(Output(trip));
+                }
+                _tostring = buf.ToString();
             }
-            return buf.ToString();
+            return _tostring;
+        }
+
+        public override bool Equals(object obj)
+        {
+            var item = obj as TransportationPlan;
+            if (item == null) return false;
+
+            return ToString().Equals(item.ToString());
+        }
+
+        public override int GetHashCode()
+        {
+            return ToString().GetHashCode();
         }
 
         private string Output(Trip trip)
@@ -82,5 +102,7 @@ namespace RTH.Modeo2
             }
             return sb.ToString();
         }
+
+
     }
 }

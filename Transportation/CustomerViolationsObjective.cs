@@ -16,6 +16,8 @@ namespace RTH.Modeo2
                 return "Violation";
             }
         }
+        public Type DataType { get { return typeof(int); } }
+        public string Format { get; set; } = "999";
 
         public int Penalty(double val)
         {

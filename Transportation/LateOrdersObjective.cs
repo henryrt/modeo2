@@ -16,6 +16,10 @@ namespace RTH.Modeo2
             }
         }
 
+        public Type DataType { get { return typeof(int); } }
+
+        public string Format { get; set; } = "D"; // base 10 integer
+
         public int Penalty(double val)
         {
             return Convert.ToInt32(val);

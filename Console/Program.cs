@@ -11,7 +11,7 @@ namespace RTH.Modeo2
     {
         static void Main(string[] args)
         {
-            new Transportation().Run(args);
+            new TransportationStudy().Run(args);
           /*
             BaseSolver solver = new BaseSolver(new TimedCollectionManager(new CollectionManager()), 250);
             var store = solver.DataStore;
@@ -82,16 +82,16 @@ namespace RTH.Modeo2
             */
         }
 
-        private static void ShowSolutions(IEnumerable<ISolution> solns, IEnumerable<IObjective> objs)
-        {
-            foreach (Solution1 s in solns)
-            {
-                var dominated = s.IsDominated(solns, objs);
-                var evals = s.Evaluate(objs);
-                ShowPenalties(evals.Values);
-                Console.WriteLine(String.Format(" N = {0} {1}", s.N, (dominated? "" : "*")));
-            }
-        }
+        //private static void ShowSolutions(IEnumerable<ISolution> solns, IEnumerable<IObjective> objs)
+        //{
+        //    foreach (Solution1 s in solns)
+        //    {
+        //        var dominated = s.IsDominated(solns, objs);
+        //        var evals = s.Evaluate(objs);
+        //        ShowPenalties(evals.Values);
+        //        Console.WriteLine(String.Format(" N = {0} {1}", s.N, (dominated? "" : "*")));
+        //    }
+        //}
         private static void ShowPenalties(IEnumerable<Evaluation> evals)
         {
             Console.Write("[ ");
@@ -123,7 +123,7 @@ namespace RTH.Modeo2
             return DateTime.Now.Subtract(startTime);
         }
     }
-
+    /*
 
     class Objective1 : IObjective
     {
@@ -203,4 +203,6 @@ namespace RTH.Modeo2
             return ((Solution1)soln).N < 6;
         }
     }
+
+    */
 }

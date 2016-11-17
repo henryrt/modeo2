@@ -8,6 +8,16 @@ namespace RTH.Modeo2
 {
     public class CostObjective : IObjective
     {
+        public Type DataType
+        {
+            get
+            {
+                return typeof(double);
+            }
+        }
+
+        public string Format  { get; set; } = "C"; // currency
+
         public string Name { get { return "Cost"; } }
         //public int Scale;
 

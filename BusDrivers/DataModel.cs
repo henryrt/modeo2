@@ -40,12 +40,21 @@ namespace RTH.BusDrivers
         public Driver AddPrefShift(int shift, params int[] days) { days.ToList().ForEach(day => AddPrefShift(shift, day)); return this; }
     }
 
+    public class Assignment
+    {
+        public Driver Driver;
+        public int Day;
+        public int Shift;
+        public int Line;
+    }
+
     public class Schedule : BaseSolution
     {
         private Driver[] drivers;
         private int numLines;
 
         private Driver[,] shifts;
+        private IList<Assignment> assignments;
 
         public Schedule(Driver[] Drivers, int Days = 14, int NumLines = 3)
         {
@@ -57,6 +66,30 @@ namespace RTH.BusDrivers
         public void SetShift(int day, int shift, int line, Driver d)
         {
             shifts[day * 2 + shift, line] = d;
+            assignments = null;
+        }
+
+        public Driver[,] GetShifts()
+        {
+            return shifts;
+        }
+
+        public IList<Assignment> GetAssignments()
+        {
+            if (assignments == null)
+            {
+                assignments = new List<Assignment>(shifts.Length);
+
+                for (int day = 0; day < shifts.GetLength(0); day++)
+                {
+                    for (int line = 0; line < shifts.GetLength(1); line++)
+                    {
+                        assignments.Add(new Assignment() { Day = day, Line = line, Shift = 0, Driver = shifts[day * 2, line] });
+                        assignments.Add(new Assignment() { Day = day, Line = line, Shift = 1, Driver = shifts[day * 2 + 1, line] });
+                    }
+                }
+            }
+            return assignments;
         }
     }
 }

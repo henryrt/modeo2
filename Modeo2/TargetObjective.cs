@@ -14,7 +14,7 @@ namespace RTH.Modeo2
     {
         public string Name { get; }
         public Type DataType { get { return typeof(double); } }
-        public string Format { get; set; } // = "999999.##";  // C# 6
+        public string Format { get; set; } = "999999.##";  // C# 6
 
         private readonly double target;
         private readonly double underPenaltyFactor;

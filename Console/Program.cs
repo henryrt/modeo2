@@ -14,6 +14,7 @@ namespace RTH.Modeo2
             // new TransportationStudy().Run(args);
 
             var ps = BusDrivers.ProblemStatement.CreateProblem();
+            new BusDrivers.BusStudy(ps).Run(args); 
           /*
             BaseSolver solver = new BaseSolver(new TimedCollectionManager(new CollectionManager()), 250);
             var store = solver.DataStore;

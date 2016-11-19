@@ -220,8 +220,8 @@ namespace RTH.Modeo2
                 foreach (var obj in objs)
                 {
                     var eval = soln.Evaluate(obj);
-                    //ar[i++] = eval.Value.ToString() + " (" + eval.Penalty.ToString() + ")";
-                    ar[i++] = eval.Value.ToString();
+                    ar[i++] = eval.Value.ToString() + " (" + eval.Penalty.ToString() + ")";
+                    //ar[i++] = eval.Value.ToString();
                 }
                 al.Add(ar);
             }

@@ -43,6 +43,12 @@ namespace RTH.BusDrivers
         {
             return base.ToString();
         }
+
+        public void Resize(int NumDays)
+        {
+            Array.Resize(ref DaysOff, NumDays);
+            Array.Resize(ref PrefShift, NumDays);
+        }
     }
 
     public class Assignment
@@ -51,6 +57,11 @@ namespace RTH.BusDrivers
         public int Day;
         public int Shift;
         public int Line;
+
+        public override String ToString()
+        {
+            return Driver.Name + " Day " + Day + " Shift " + Shift + " Line " + Line;
+        }
     }
 
     public class Schedule : BaseSolution
@@ -71,24 +82,37 @@ namespace RTH.BusDrivers
             shifts = new Driver [2 * Days, numLines];
         }
 
+        public Schedule(ProblemStatement ps) 
+            : this(ps.Drivers.ToArray(), ps.NumDays, ps.NumLines) { }
+
         public bool SetShift(int day, int shift, int line, Driver d)
         {
-            // do not use scheduled day off
-            if (d.DaysOff[day]) return false;
+            var index = day * 2 + shift;
+            var prevDriver = shifts[index, line];
+            if (prevDriver != null)
+            {
+                driverSchedules[prevDriver] = null;
+            }
+            if (d != null)
+            {
+                // do not use scheduled day off
+                if (d.DaysOff[day]) return false;
 
-            // do not permit driver to work both shifts on a day
-            var checkshift = 1 - shift;
-            var s = DriverSchedule(d);
-            if (s[day * 2 + checkshift]) return false;
-            
-            // do not permit driver to be assigned to a line not trained for
-            if (!d.Lines.Contains(line)) return false;
+                // do not permit driver to work both shifts on a day
+                var checkshift = 1 - shift;
+                var s = DriverSchedule(d);
+                if (s[day * 2 + checkshift]) return false;
 
-            shifts[day * 2 + shift, line] = d;
+                // do not permit driver to be assigned to a line not trained for
+                if (!d.Lines.Contains(line)) return false;
+
+                driverSchedules[d] = null;
+            }
+
+            shifts[index, line] = d;
 
             // reset cached data structures
             assignments = null;
-            driverSchedules[d] = null;
             return true;
         }
 

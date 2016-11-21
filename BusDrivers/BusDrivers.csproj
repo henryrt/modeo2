@@ -47,7 +47,7 @@
     <Compile Include="Objectives.cs" />
     <Compile Include="ProblemStatement.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RandomCreate.cs" />
+    <Compile Include="RandomAssignments.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Modeo2\Modeo2.csproj">

@@ -21,18 +21,28 @@ namespace RTH.BusDrivers
             var schedule = soln as Schedule;
             var assignments = schedule.GetAssignments();
             var count = 0;
+            //Console.WriteLine("ShiftPref");
             foreach (var a in assignments)
             {
                 // check if driver has a preferred shift on that day
-                if (a.Driver?.PrefShift[a.Day] == a.Shift + 1) count++;
+                if (a.Driver?.PrefShift[a.Day] == a.Shift + 1)
+                {
+                    //Console.WriteLine("Shift Preference Met: " + a);
+                    count++;
+                }
             }
+            //Console.WriteLine("Total = " + count);
             return count;
         }
 
         public static double ExcessLateShifts(ISolution soln)
         {
+            return ExcessLateShifts(soln, 4);
+        }
+        public static double ExcessLateShifts(ISolution soln, int limit)
+        {
             // how many excess late shifts are there? Each driver should have no more than 4
-            const int limit = 4;
+            
             var schedule = soln as Schedule;
             var shifts = schedule.GetShifts();
             var lates = new Dictionary<Driver, int>();
@@ -61,7 +71,11 @@ namespace RTH.BusDrivers
 
         public static double ConsecutiveLateShifts(ISolution soln)
         {
-            const int limit = 3;
+            return ConsecutiveLateShifts(soln, 3);
+        }
+        public static double ConsecutiveLateShifts(ISolution soln, int limit)
+        {
+            
             var schedule = soln as Schedule;
             var drivers = schedule.GetDrivers();
 
@@ -126,27 +140,42 @@ namespace RTH.BusDrivers
 
             return retval;
         }
+
         public static double LongRest(ISolution soln)
+        {
+            return LongRest(soln, 5);
+        }
+
+        public static double LongRest(ISolution soln, int limit, Driver d)
+        {
+            var schedule = soln as Schedule;
+            var retval = 0;
+            var consecDays = 0;
+            var days = schedule.GetShifts().GetLength(0) / 2;
+
+            for (int day = 0; day < days; day++)
+            {
+                if (schedule.WorkingOn(d, day))
+                {
+                    if (consecDays >= limit) retval++;
+                    consecDays = 0;
+                }
+                else consecDays++;
+            }
+            if (consecDays >= limit) retval++;
+            return retval;
+        }
+
+        public static double LongRest(ISolution soln, int limit)
         {
             var schedule = soln as Schedule;
 
             var drivers = schedule.GetDrivers();
-            var days = schedule.GetShifts().GetLength(0) / 2;
 
-            var retval = 0;
+            var retval = 0.0;
             foreach (Driver d in drivers)
             {
-                var consecDays = 0;
-                for (int day = 0; day < days; day++)
-                {
-                    if (schedule.WorkingOn(d, day))
-                    {
-                        if (consecDays >= 5) retval++;
-                        consecDays = 0;
-                    }
-                    else consecDays++;
-                }
-                if (consecDays >= 5) retval++;           
+                retval += LongRest(soln, limit, d);
             }
 
             return retval;

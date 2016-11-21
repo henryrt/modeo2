@@ -121,5 +121,11 @@ namespace RTH.BusDrivers
 
             return ps;
         }
+
+        public IEnumerable<Driver> DriversForLine(int line)
+        {
+            var q = Drivers.Where(d => d.Lines.Contains(line));
+            return q;
+        }
     }
 }

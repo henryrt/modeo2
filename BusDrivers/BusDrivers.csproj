@@ -45,6 +45,7 @@
     <Compile Include="DataModel.cs" />
     <Compile Include="EmptyCreate.cs" />
     <Compile Include="Objectives.cs" />
+    <Compile Include="PrefShiftAssignments.cs" />
     <Compile Include="ProblemStatement.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RandomAssignments.cs" />

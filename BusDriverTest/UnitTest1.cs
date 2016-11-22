@@ -268,6 +268,15 @@ namespace BusDriverTest
             Assert.AreEqual(1, Objectives.ConsecutiveLateShifts(TestSchedule, 2));
             Assert.AreEqual(0, Objectives.ConsecutiveLateShifts(TestSchedule, 3));
 
+            Assert.AreEqual(1, TestSchedule.Booked(TestSchedule.GetDriverByName("D1"), 4));
+            Assert.AreEqual(1, TestSchedule.Booked(TestSchedule.GetDriverByName("D2"), 0));
+            Assert.AreEqual(1, TestSchedule.Booked(TestSchedule.GetDriverByName("D2"), 4));
+            Assert.AreEqual(1, TestSchedule.Booked(TestSchedule.GetDriverByName("D4"), 2));
+            Assert.AreEqual(1, TestSchedule.Booked(TestSchedule.GetDriverByName("D6"), 0));
+            Assert.AreEqual(0, TestSchedule.Booked(TestSchedule.GetDriverByName("D6"), 1));
+            Assert.AreEqual(1, TestSchedule.Booked(TestSchedule.GetDriverByName("D6"), 3));
+            Assert.AreEqual(false, TestSchedule.BookingViolation());
+
         }
         [TestMethod]
         public void TestLongRest()

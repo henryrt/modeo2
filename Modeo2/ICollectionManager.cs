@@ -24,6 +24,8 @@ namespace RTH.Modeo2
         int RemoveAll<T>(Predicate<T> predicate);
 
         T GetRandom<T>();
+        T GetRandom<T>(IEnumerable<T> coll);
+
         Guid AddKeyed<T>(T item);
         void AddKeyed<K,T>(K key, T item);
     }

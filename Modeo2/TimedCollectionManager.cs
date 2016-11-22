@@ -87,6 +87,13 @@ namespace RTH.Modeo2
             Log.AppendLine(FormattedLine("GetRandom", ts));
             return ret;
         }
+        public T GetRandom<T>(IEnumerable<T> coll)
+        {
+            T ret = default(T);
+            var ts = Timer(() => { ret = DataStore.GetRandom<T>(coll); });
+            Log.AppendLine(FormattedLine("GetRandom coll", ts));
+            return ret;
+        }
 
         public Guid AddKeyed<T>(T item)
         {

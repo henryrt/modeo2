@@ -27,18 +27,75 @@ namespace RTH.BusDrivers
             LoadFilters(solver);
             LoadAlgorithms(solver);
 
-            for (int i = 0; i < 1; i++)
+            // create 3 empty schedules
+            new EmptyCreate().Run(solver);
+            new EmptyCreate().Run(solver);
+            new EmptyCreate().Run(solver);
+
+            //create 10 using preferred shifts
+            for (int i = 0; i < 10; i++)
             {
-                solver.Start(100000);
+                new PrefShiftAssignments().Run(solver);
+            }
+
+            for (int i = 0; i < 100; i++)
+            {
+                // add a new empty soln
+                new EmptyCreate().Run(solver);
+                // add a new prefered shift sched
+                new PrefShiftAssignments().Run(solver);
+
+                solver.Start(500000);
                 solver.RemoveFilteredSolutions(true);
                 solver.RemoveDominatedSolutions();
                 ShowGrid(solver);
             }
 
-            var sched = solver.DataStore.GetEnumerable<ISolution>().Last() as Schedule;
-            foreach (var d in sched.GetDrivers())
+            solver.AddFilter((cm, soln) =>
             {
-                Console.WriteLine(sched.DisplayDriver(d));
+                return new ObjectiveFilter()
+                {
+                    ObjectiveName = "EmptyShifts",
+                    LimitValue = 1
+                }.GetFilter(cm, soln);
+            });
+
+            solver.RemoveFilteredSolutions(true);
+
+            //check for bad solutions
+            foreach (var soln in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
+            {
+                if (soln.BookingViolation()) throw new ApplicationException("Invalid schedule");
+            }
+
+            foreach(var sched in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
+            //if (sched != null)
+            {
+                foreach (var d in sched.GetDrivers())
+                {
+                    Console.WriteLine(sched.DisplayDriver(d));
+                }
+                //foreach (var a in sched.GetAssignments().OrderBy(a => a.Shift).OrderBy(a => a.Day))
+                //{
+                //    Console.WriteLine(a);
+                //}
+                var sh = sched.GetShifts();
+                for(var line = 0; line < sh.GetLength(1); line++)
+                {
+                    for(var index = 0; index < sh.GetLength(0); index++)
+                    {
+                        if (sh[index, line] == null) Console.Write(" ");
+                        Console.Write(sh[index, line]?.Name + " ");
+                    }
+                    Console.WriteLine();
+                }
+                //sched.GenerateAssignments();
+                //foreach (var a in sched.GetAssignments().OrderBy(a => a.Shift).OrderBy(a => a.Day))
+                //{
+                //    Console.WriteLine(a);
+                //}
+
+
             }
         }
 
@@ -47,18 +104,29 @@ namespace RTH.BusDrivers
             var filter1 = new ObjectiveFilter()
             {
                 ObjectiveName = "EmptyShifts",
-                LimitValue = 0
+                LimitValue = 4
             };
             solver.AddFilter((cm, soln) =>
             {
                 return filter1.GetFilter(cm, soln);
             });
+
+            var filter2 = new ObjectiveFilter()
+            {
+                ObjectiveName = "Points",
+                LimitValue = 333
+            };
+            solver.AddFilter((cm, soln) =>
+            {
+                return filter2.GetFilter(cm, soln);
+            });
         }
 
         private void LoadAlgorithms(BusSolver solver)
         {
+            //solver.DataStore.Add<IAlgorithm>(new EmptyCreate());
+            //solver.DataStore.Add<IAlgorithm>(new PrefShiftAssignments());
             solver.DataStore.Add<IAlgorithm>(new RandomAssignments());
-            solver.DataStore.Add<IAlgorithm>(new EmptyCreate());
         }
 
         private void LoadObjectives(BusSolver solver)

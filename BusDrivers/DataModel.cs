@@ -60,7 +60,7 @@ namespace RTH.BusDrivers
 
         public override String ToString()
         {
-            return Driver.Name + " Day " + Day + " Shift " + Shift + " Line " + Line;
+            return "Day " + Day + " Shift " + Shift + " Line " + Line + " " + Driver?.Name;
         }
     }
 
@@ -89,28 +89,26 @@ namespace RTH.BusDrivers
         {
             var index = day * 2 + shift;
             var prevDriver = shifts[index, line];
-            if (prevDriver != null)
-            {
-                driverSchedules[prevDriver] = null;
-            }
             if (d != null)
             {
                 // do not use scheduled day off
                 if (d.DaysOff[day]) return false;
 
-                // do not permit driver to work both shifts on a day
-                var checkshift = 1 - shift;
-                var s = DriverSchedule(d);
-                if (s[day * 2 + checkshift]) return false;
+                // is driver already scheduled on this day?
+                if (WorkingOn(d, day)) return false;
 
                 // do not permit driver to be assigned to a line not trained for
                 if (!d.Lines.Contains(line)) return false;
 
                 driverSchedules[d] = null;
             }
+            if (prevDriver != null)
+            {
+                driverSchedules[prevDriver] = null;
+            }
 
             shifts[index, line] = d;
-
+            
             // reset cached data structures
             assignments = null;
             return true;
@@ -126,6 +124,11 @@ namespace RTH.BusDrivers
             return drivers;
         }
 
+        public Driver GetDriverByName(string name)
+        {
+            return GetDrivers().Where(d => d.Name == name).Single();
+        }
+
         public Driver[,] GetShifts()
         {
             return shifts;
@@ -133,20 +136,28 @@ namespace RTH.BusDrivers
 
         public IList<Assignment> GetAssignments()
         {
-            if (assignments == null)
-            {
-                assignments = new List<Assignment>(shifts.Length);
+            bool cache = true;
 
-                for (int shift = 0; shift < shifts.GetLength(0); shift+=2)
+            if (!cache || assignments == null)
+            {
+                GenerateAssignments();
+            }
+
+            return assignments;
+        }
+
+        public void GenerateAssignments()
+        {
+            assignments = new List<Assignment>(shifts.Length);
+
+            for (int shift = 0; shift < shifts.GetLength(0); shift += 2)
+            {
+                for (int line = 0; line < shifts.GetLength(1); line++)
                 {
-                    for (int line = 0; line < shifts.GetLength(1); line++)
-                    {
-                        assignments.Add(new Assignment() { Day = shift/2, Line = line, Shift = 0, Driver = shifts[shift, line] });
-                        assignments.Add(new Assignment() { Day = shift/2, Line = line, Shift = 1, Driver = shifts[shift + 1, line] });
-                    }
+                    assignments.Add(new Assignment() { Day = shift / 2, Line = line, Shift = 0, Driver = shifts[shift, line] });
+                    assignments.Add(new Assignment() { Day = shift / 2, Line = line, Shift = 1, Driver = shifts[shift + 1, line] });
                 }
             }
-            return assignments;
         }
 
         public IEnumerable<Assignment> EmptyAssignments()
@@ -193,10 +204,70 @@ namespace RTH.BusDrivers
                     retval = retval + "XX";
                     continue;
                 }
-                retval += sched[day * 2] ? "*" : ".";
-                retval += sched[day * 2 + 1] ? "*" : ".";
+                retval += Line(d, day, 0);
+                retval += Line(d, day, 1);
             }
             return retval;
+        }
+
+        private string Line(Driver d, int day, int sh)
+        {
+            var sched = DriverSchedule(d);
+            var index = day * 2 + sh;
+            if (!sched[index]) return ".";
+            for (int i=0; i < shifts.GetLength(1);i++)
+            {
+                if (shifts[index, i] == d) return String.Format("{0}", i);
+            }
+            return "?";
+        }
+
+        public int Booked(Driver d, int day, int sh)
+        {
+            var index = day * 2 + sh;
+            return Booked(d, index);
+        }
+
+        public int Booked(Driver d, int index)
+        {
+            var count = 0;
+            
+            for (int i = 0; i < shifts.GetLength(1); i++)
+            {
+                if (shifts[index, i] == d) count++;
+            }
+            return count;
+        }
+        public bool BookedOnDayOff(Driver d)
+        {
+            for (int day = 0; day < days; day++)
+            {
+                if (d.DaysOff[day] && WorkingOn(d, day)) return true;
+            }
+            return false;
+            
+        }
+        public bool BookingViolation()
+        {
+            foreach (Driver d in GetDrivers())
+            {
+                if (BookedOnDayOff(d))
+                    return true;
+
+                for (int index = 0; index < shifts.GetLength(0); index++)
+                {
+                    if (Booked(d, index) > 1)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public override String ToString()
+        {
+            return "Schedule "+ base.GetHashCode();
         }
     }
 }

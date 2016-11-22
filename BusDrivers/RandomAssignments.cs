@@ -14,8 +14,14 @@ namespace RTH.BusDrivers
            
             foreach(var a in schedule.EmptyAssignments())
             {
-                a.Driver = s.DataStore.GetRandom<Driver>();
-                schedule.SetShift(a);
+                var driver = s.DataStore.GetRandom<Driver>();
+                if (schedule.SetShift(a.Day, a.Shift, a.Line, driver))
+                {
+                //    Console.WriteLine("Assigned " + a);
+                }
+               // else Console.WriteLine("Not assigned " + a);
+
+                //if (schedule.BookingViolation()) throw new ApplicationException("Invalid Schedule created.");
             }
         }
     }

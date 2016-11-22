@@ -94,6 +94,11 @@ namespace RTH.Modeo2
             return list[ix];
         }
 
+        public T GetRandom<T>(IEnumerable<T> coll)
+        {
+            return coll.ElementAt(rand.Next(coll.Count()));
+        }
+
         public bool All<T>(Func<T, bool> condition)
         {
             return (ht[typeof(T)] as ICollection<T>)?.All<T>(condition) ?? true;

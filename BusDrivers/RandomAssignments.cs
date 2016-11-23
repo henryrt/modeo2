@@ -1,10 +1,18 @@
 ﻿using System;
 using RTH.Modeo2;
+using System.Linq;
 
 namespace RTH.BusDrivers
 {
     internal class RandomAssignments : IAlgorithm
     {
+        private bool RespectDayOffPrefs = false;
+
+        public RandomAssignments(bool RespectDayOffPrefs = false)
+        {
+            this.RespectDayOffPrefs = RespectDayOffPrefs;
+        }
+
         public void Run(ISolver solver)
         {
             // get a random solution and assign a random driver to empty assignments
@@ -14,14 +22,18 @@ namespace RTH.BusDrivers
            
             foreach(var a in schedule.EmptyAssignments())
             {
-                var driver = s.DataStore.GetRandom<Driver>();
-                if (schedule.SetShift(a.Day, a.Shift, a.Line, driver))
-                {
-                //    Console.WriteLine("Assigned " + a);
-                }
-               // else Console.WriteLine("Not assigned " + a);
+                var driver = s.Problem.GetRandomDriverForLine(a.Line);
+                var OK = true;
 
-                //if (schedule.BookingViolation()) throw new ApplicationException("Invalid Schedule created.");
+                if (RespectDayOffPrefs)
+                {
+                    OK = !driver.PrefDaysOff.Contains(a.Day);
+                }
+                if (OK && schedule.SetShift(a.Day, a.Shift, a.Line, driver))
+                {
+               
+                }
+               
             }
         }
     }

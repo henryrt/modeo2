@@ -27,28 +27,41 @@ namespace RTH.BusDrivers
             LoadFilters(solver);
             LoadAlgorithms(solver);
 
-            // create 3 empty schedules
-            new EmptyCreate().Run(solver);
-            new EmptyCreate().Run(solver);
-            new EmptyCreate().Run(solver);
-
-            //create 10 using preferred shifts
             for (int i = 0; i < 10; i++)
             {
+                new ByLineCreate().Run(solver);
+                new EmptyCreate().Run(solver);
                 new PrefShiftAssignments().Run(solver);
             }
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i <200; i++)
             {
+                //new CopyBest(1, "LateEarly").Run(solver);
+                //new CopyBest(1, "EmptyShifts").Run(solver);
+                if (solver.DataStore.Count<ISolution>() < 60)
+                {
+                    new CopyBest(5, "Points").Run(solver);
+                    new ByLineCreate().Run(solver);
+                }
+                if (solver.DataStore.Count<ISolution>() > 20)
+                {
+                    new RemoveRandomDriver().Run(solver);
+                    new RemoveRandomDriver().Run(solver);
+                    new RemoveRandomDriver().Run(solver);
+                    new ByLineCreate().Run(solver);
+                    new ByLineCreate().Run(solver);
+                }
                 // add a new empty soln
-                new EmptyCreate().Run(solver);
+                for (int j = 0; j < 5; j++) new EmptyCreate().Run(solver);
                 // add a new prefered shift sched
-                new PrefShiftAssignments().Run(solver);
+                for (int j = 0; j < 5; j++) new PrefShiftAssignments().Run(solver);
 
-                solver.Start(500000);
+                solver.Start(1000);
                 solver.RemoveFilteredSolutions(true);
                 solver.RemoveDominatedSolutions();
-                ShowGrid(solver);
+                
+                //ShowGrid(solver);
+                //Console.WriteLine("Iteration {0} complete", i+1);
             }
 
             solver.AddFilter((cm, soln) =>
@@ -56,11 +69,29 @@ namespace RTH.BusDrivers
                 return new ObjectiveFilter()
                 {
                     ObjectiveName = "EmptyShifts",
+                    LimitValue = 0
+                }.GetFilter(cm, soln);
+            });
+            solver.AddFilter((cm, soln) =>
+            {
+                return new ObjectiveFilter()
+                {
+                    ObjectiveName = "Points",
+                    LimitValue = -100
+                }.GetFilter(cm, soln);
+            });
+            solver.AddFilter((cm, soln) =>
+            {
+                return new ObjectiveFilter()
+                {
+                    ObjectiveName = "LateEarly",
                     LimitValue = 1
                 }.GetFilter(cm, soln);
             });
 
             solver.RemoveFilteredSolutions(true);
+            RemoveDuplicates(solver);
+            ShowGrid(solver);
 
             //check for bad solutions
             foreach (var soln in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
@@ -68,9 +99,12 @@ namespace RTH.BusDrivers
                 if (soln.BookingViolation()) throw new ApplicationException("Invalid schedule");
             }
 
+            int row = 0;
+            //show solutions
             foreach(var sched in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
             //if (sched != null)
             {
+                Console.WriteLine("Solution {0}", row++);
                 foreach (var d in sched.GetDrivers())
                 {
                     Console.WriteLine(sched.DisplayDriver(d));
@@ -99,12 +133,27 @@ namespace RTH.BusDrivers
             }
         }
 
+        private void RemoveDuplicates(BusSolver solver)
+        {
+            var uniques = new List<ISolution>();
+            foreach (var soln in solver.DataStore.GetEnumerable<ISolution>())
+            {
+                if (!(soln as Schedule).IsDuplicate(uniques))
+                {
+                    uniques.Add(soln);
+                }
+            }
+            //remove the solutions and only add uniques
+            solver.DataStore.RemoveAll<ISolution>();
+            solver.DataStore.AddCollection<ISolution>(uniques);
+        }
+
         private void LoadFilters(BusSolver solver)
         {
             var filter1 = new ObjectiveFilter()
             {
                 ObjectiveName = "EmptyShifts",
-                LimitValue = 4
+                LimitValue = 1
             };
             solver.AddFilter((cm, soln) =>
             {
@@ -114,7 +163,7 @@ namespace RTH.BusDrivers
             var filter2 = new ObjectiveFilter()
             {
                 ObjectiveName = "Points",
-                LimitValue = 333
+                LimitValue = 149
             };
             solver.AddFilter((cm, soln) =>
             {
@@ -126,7 +175,14 @@ namespace RTH.BusDrivers
         {
             //solver.DataStore.Add<IAlgorithm>(new EmptyCreate());
             //solver.DataStore.Add<IAlgorithm>(new PrefShiftAssignments());
+
+            //            solver.DataStore.Add<IAlgorithm>(new LongWeekend());
+
+            //solver.DataStore.Add<IAlgorithm>(new RemoveRandomDriver());
             solver.DataStore.Add<IAlgorithm>(new RandomAssignments());
+            solver.DataStore.Add<IAlgorithm>(new RandomAssignments(true));
+            solver.DataStore.Add<IAlgorithm>(new ReduceLateEarly());
+            solver.DataStore.Add<IAlgorithm>(new ReduceExcessLates());
         }
 
         private void LoadObjectives(BusSolver solver)
@@ -159,7 +215,7 @@ namespace RTH.BusDrivers
             {
                 ValueProvider = Objectives.LateFollowedByEarly
             });
-            solver.DataStore.Add<IObjective>(new TargetObjective("Points", 0, 0, 1)
+            solver.DataStore.Add<IObjective>(new TargetObjective("Points", 0, -1, 1)
             {
                 ValueProvider = (soln) => {
                     var objs = solver.DataStore.GetEnumerable<IObjective>().Where(o => !o.Name.Equals("Points"));

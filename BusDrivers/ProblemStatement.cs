@@ -122,10 +122,21 @@ namespace RTH.BusDrivers
             return ps;
         }
 
+        private static Random rand = new Random();
         public IEnumerable<Driver> DriversForLine(int line)
         {
             var q = Drivers.Where(d => d.Lines.Contains(line));
             return q;
         }
+        public Driver GetRandomDriver()
+        {
+            return Drivers[rand.Next(Drivers.Count())];
+        }
+        public Driver GetRandomDriverForLine(int line)
+        {
+            var drivers = DriversForLine(line);
+            return drivers.ElementAt(rand.Next(drivers.Count()));
+        }
+
     }
 }

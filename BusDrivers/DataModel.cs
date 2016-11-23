@@ -85,9 +85,35 @@ namespace RTH.BusDrivers
         public Schedule(ProblemStatement ps) 
             : this(ps.Drivers.ToArray(), ps.NumDays, ps.NumLines) { }
 
+        public Schedule Copy()
+        {
+            var s = new Schedule(drivers, days, numLines);
+            Array.Copy(this.shifts, s.shifts, s.shifts.Length);
+            return s;
+        }
+        public override bool IsDuplicate(ISolution soln)
+        {
+            // assume Drivers, days and lines are the same
+            //compare shifts array
+            var otherShifts = (soln as Schedule).GetShifts();
+            for (int i=0; i<shifts.GetLength(0); i++)
+            {
+                for (int j=0; j<shifts.GetLength(1); j++)
+                {
+                    if (otherShifts[i, j] != shifts[i, j]) return false;
+                }
+            }
+            return true;
+        }
+
         public bool SetShift(int day, int shift, int line, Driver d)
         {
-            var index = day * 2 + shift;
+            return SetShift(day * 2 + shift, line, d);
+        }
+        internal bool SetShift(int index, int line, Driver d)    
+        {
+            var day = index / 2;
+            
             var prevDriver = shifts[index, line];
             if (d != null)
             {
@@ -128,7 +154,6 @@ namespace RTH.BusDrivers
         {
             return GetDrivers().Where(d => d.Name == name).Single();
         }
-
         public Driver[,] GetShifts()
         {
             return shifts;
@@ -168,8 +193,7 @@ namespace RTH.BusDrivers
 
         public bool[] DriverSchedule(Driver d)
         {
-            bool[] retval;
-            if (driverSchedules.TryGetValue(d, out retval))
+            if (driverSchedules.TryGetValue(d, out var retval))
             {
                 if (retval != null) return retval;
             }
@@ -269,5 +293,7 @@ namespace RTH.BusDrivers
         {
             return "Schedule "+ base.GetHashCode();
         }
+
+       
     }
 }

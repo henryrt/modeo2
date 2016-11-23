@@ -42,24 +42,11 @@ namespace RTH.BusDrivers
         public static double ExcessLateShifts(ISolution soln, int limit)
         {
             // how many excess late shifts are there? Each driver should have no more than 4
-            
+
             var schedule = soln as Schedule;
             var shifts = schedule.GetShifts();
             var lates = new Dictionary<Driver, int>();
-
-            for (var shift = 1; shift < shifts.GetLength(0); shift += 2)
-            {
-                for (var line = 0; line < shifts.GetLength(1); line++)
-                {
-                    var d = shifts[shift, line];
-                    if (d != null)
-                    {
-                        int i;
-                        if (!lates.TryGetValue(d, out i)) i = 0;
-                        lates[d] = i + 1;
-                    }
-                }
-            }
+            Lates(shifts, lates);
 
             var retval = 0;
             foreach (var count in lates.Values)
@@ -67,6 +54,22 @@ namespace RTH.BusDrivers
                 if (count > limit) retval += (count - limit);
             }
             return retval;
+        }
+
+        public static void Lates(Driver[,] shifts, Dictionary<Driver, int> lates)
+        {
+            for (var shift = 1; shift < shifts.GetLength(0); shift += 2)
+            {
+                for (var line = 0; line < shifts.GetLength(1); line++)
+                {
+                    var d = shifts[shift, line];
+                    if (d != null)
+                    {                        
+                        if (!lates.TryGetValue(d, out var i)) i = 0;
+                        lates[d] = i + 1;
+                    }
+                }
+            }
         }
 
         public static double ConsecutiveLateShifts(ISolution soln)

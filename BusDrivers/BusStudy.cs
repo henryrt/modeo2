@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RTH.Modeo2;
 using static System.Console;
+using System.IO;
 
 namespace RTH.BusDrivers
 {
@@ -18,6 +19,10 @@ namespace RTH.BusDrivers
             this.ps = ps;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
         public void Run(String[] args)
         {
             solver = new BusSolver() { Problem = ps };
@@ -26,6 +31,10 @@ namespace RTH.BusDrivers
             LoadObjectives(solver);
             LoadFilters(solver);
             LoadAlgorithms(solver);
+            LoadSeedSolutions(solver);
+            ShowGrid(solver);
+            solver.RemoveDominatedSolutions();
+            ShowGrid(solver);
 
             for (int i = 0; i < 10; i++)
             {
@@ -34,36 +43,62 @@ namespace RTH.BusDrivers
                 new PrefShiftAssignments().Run(solver);
             }
 
-            for (int i = 0; i <200; i++)
+            ShowGrid(solver);
+            for (int i = 0; i < 1000; i++)
             {
                 //new CopyBest(1, "LateEarly").Run(solver);
                 //new CopyBest(1, "EmptyShifts").Run(solver);
-                if (solver.DataStore.Count<ISolution>() < 60)
+                if (solver.DataStore.Count<ISolution>() < 70)
                 {
-                    new CopyBest(5, "Points").Run(solver);
+                    new CopyBest(10, "Points").Run(solver);
+                    //new CopyBest(5, "LongRest").Run(solver);
                     new ByLineCreate().Run(solver);
+                    new ByLineCreate().Run(solver);
+                    new ByLineCreate().Run(solver);
+                    new ByLineCreate().Run(solver);
+                    new ByLineCreate().Run(solver);
+                    new PrefShiftAssignments().Run(solver);
+                    new PrefShiftAssignments().Run(solver);
+                    new PrefShiftAssignments().Run(solver);
+                    new PrefShiftAssignments().Run(solver);
+                    new PrefShiftAssignments().Run(solver);
+                    new PrefShiftAssignments().Run(solver);
                 }
-                if (solver.DataStore.Count<ISolution>() > 20)
+                if (solver.DataStore.Count<ISolution>() < 80)
+                {
+                    new CrossCreate().Run(solver);
+                    new CrossCreate().Run(solver);
+                    new CrossCreate().Run(solver);
+                    new CrossCreate().Run(solver);
+                    new CrossCreate().Run(solver);
+                }
+
+                if (solver.DataStore.Count<ISolution>() > 50)
                 {
                     new RemoveRandomDriver().Run(solver);
                     new RemoveRandomDriver().Run(solver);
                     new RemoveRandomDriver().Run(solver);
-                    new ByLineCreate().Run(solver);
-                    new ByLineCreate().Run(solver);
+                    new RemoveRandomDriver().Run(solver);
+                    new RemoveRandomDriver().Run(solver);
+                    //new ByLineCreate().Run(solver);
+                    //new ByLineCreate().Run(solver);
                 }
                 // add a new empty soln
-                for (int j = 0; j < 5; j++) new EmptyCreate().Run(solver);
+                //for (int j = 0; j < 5; j++) new EmptyCreate().Run(solver);
                 // add a new prefered shift sched
-                for (int j = 0; j < 5; j++) new PrefShiftAssignments().Run(solver);
+                //for (int j = 0; j < 10; j++) new PrefShiftAssignments().Run(solver);
 
-                solver.Start(1000);
+                solver.Start(2000);
                 solver.RemoveFilteredSolutions(true);
                 solver.RemoveDominatedSolutions();
-                
-                //ShowGrid(solver);
-                //Console.WriteLine("Iteration {0} complete", i+1);
-            }
 
+                if (i % 100 == 0) ShowGrid(solver);
+
+                var best = solver.BestSchedule("Points");
+                var points = best?.Evaluate("Points");
+                Console.WriteLine("Iteration {0} complete\t\tPopulation = {1}  \t[best schedule {2},  \t{3} points  \t{4}",
+                    i + 1, solver.getGrid().Count - 1, best?.ToString(), points?.Penalty, "");// best?.Algorithm);
+            }
             solver.AddFilter((cm, soln) =>
             {
                 return new ObjectiveFilter()
@@ -77,7 +112,7 @@ namespace RTH.BusDrivers
                 return new ObjectiveFilter()
                 {
                     ObjectiveName = "Points",
-                    LimitValue = -100
+                    LimitValue = -111
                 }.GetFilter(cm, soln);
             });
             solver.AddFilter((cm, soln) =>
@@ -85,23 +120,77 @@ namespace RTH.BusDrivers
                 return new ObjectiveFilter()
                 {
                     ObjectiveName = "LateEarly",
-                    LimitValue = 1
+                    LimitValue = 0
                 }.GetFilter(cm, soln);
             });
 
+            ShowGrid(solver);
+            solver.RemoveDominatedSolutions();
+            ShowGrid(solver);
             solver.RemoveFilteredSolutions(true);
             RemoveDuplicates(solver);
             ShowGrid(solver);
+            solver.RemoveDominatedSolutions();
+            ShowGrid(solver);
 
+            WriteSolutions(solver);
             //check for bad solutions
-            foreach (var soln in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
-            {
-                if (soln.BookingViolation()) throw new ApplicationException("Invalid schedule");
-            }
+            //foreach (var soln in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
+            //{
+            //    if (soln.BookingViolation()) throw new ApplicationException("Invalid schedule");
+            //}
 
-            int row = 0;
+            ShowSolutions();
+            //if (solver.DataStore.Count<ISolution>() > 0)
+            //{
+            //    solver.DataStore.RemoveAll<IAlgorithm>();
+            //    solver.DataStore.Add<IAlgorithm>(new CrossCreate());
+            //    //solver.DataStore.Add<IAlgorithm>(new RemoveRandomDriver());
+
+            //    for (int i = 0; i < 100; i++)
+            //    {
+            //        solver.Start(30);
+            //        //ShowGrid(solver);
+            //        solver.RemoveFilteredSolutions(true);
+            //        RemoveDuplicates(solver);
+            //        solver.RemoveDominatedSolutions();
+            //    }
+            //    ShowGrid(solver);
+
+            //}
+            //ShowSolutions();
+        }
+
+        private void LoadSeedSolutions(BusSolver solver)
+        {
+            try
+            {
+                // read seed solutions
+                var sr = new StreamReader("solutions.txt");
+                while (!sr.EndOfStream)
+                {
+                    var input = new string[3];
+                    for (int i = 0; i < 3; i++) input[i] = sr.ReadLine();
+                    var solution1 = solver.NewSchedule(algName: "Seed");
+                    solution1.PopulateSchedule(input);
+                    solver.AddSolution(solution1);
+                }
+                sr.Close();
+                //for (int i = 0; i < 3; i++)
+                //    Console.WriteLine(input[i]);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+
+            }
+        }
+
+        private void ShowSolutions()
+        {
+            int row = 1;
             //show solutions
-            foreach(var sched in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
+            foreach (var sched in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
             //if (sched != null)
             {
                 Console.WriteLine("Solution {0}", row++);
@@ -109,30 +198,38 @@ namespace RTH.BusDrivers
                 {
                     Console.WriteLine(sched.DisplayDriver(d));
                 }
-                //foreach (var a in sched.GetAssignments().OrderBy(a => a.Shift).OrderBy(a => a.Day))
-                //{
-                //    Console.WriteLine(a);
-                //}
                 var sh = sched.GetShifts();
-                for(var line = 0; line < sh.GetLength(1); line++)
+                for (var line = 0; line < sh.GetLength(1); line++)
                 {
-                    for(var index = 0; index < sh.GetLength(0); index++)
+                    for (var index = 0; index < sh.GetLength(0); index++)
                     {
                         if (sh[index, line] == null) Console.Write(" ");
                         Console.Write(sh[index, line]?.Name + " ");
                     }
                     Console.WriteLine();
                 }
-                //sched.GenerateAssignments();
-                //foreach (var a in sched.GetAssignments().OrderBy(a => a.Shift).OrderBy(a => a.Day))
-                //{
-                //    Console.WriteLine(a);
-                //}
-
-
             }
         }
 
+        private void WriteSolutions(BusSolver solver)
+        {
+            var writer = new StreamWriter("solutions.txt", false); // overwrite
+
+            foreach (var sched in solver.DataStore.GetEnumerable<ISolution>().Cast<Schedule>())
+            {
+                var sh = sched.GetShifts();
+                for (var line = 0; line < sh.GetLength(1); line++)
+                {
+                    for (var index = 0; index < sh.GetLength(0); index++)
+                    {
+                        if (sh[index, line] == null) Console.Write(" ");
+                        writer.Write(sh[index, line]?.Name + " ");
+                    }
+                    writer.WriteLine();
+                }
+            }
+            writer.Close();
+        }
         private void RemoveDuplicates(BusSolver solver)
         {
             var uniques = new List<ISolution>();
@@ -163,7 +260,7 @@ namespace RTH.BusDrivers
             var filter2 = new ObjectiveFilter()
             {
                 ObjectiveName = "Points",
-                LimitValue = 149
+                LimitValue = 50
             };
             solver.AddFilter((cm, soln) =>
             {
@@ -183,6 +280,7 @@ namespace RTH.BusDrivers
             solver.DataStore.Add<IAlgorithm>(new RandomAssignments(true));
             solver.DataStore.Add<IAlgorithm>(new ReduceLateEarly());
             solver.DataStore.Add<IAlgorithm>(new ReduceExcessLates());
+            solver.DataStore.Add<IAlgorithm>(new RandomAssignments());
         }
 
         private void LoadObjectives(BusSolver solver)
@@ -229,24 +327,27 @@ namespace RTH.BusDrivers
 
         private void ShowGrid(BaseSolver solver, IOrderedEnumerable<ISolution> results)
         {
-            DisplayResults(solver.getGrid(results));
+            DisplayResults(solver.getGrid(results), solver);
         }
 
         public static void ShowGrid(BaseSolver solver)
         {
             var grid = solver.getGrid();
 
-            DisplayResults(grid);
+            DisplayResults(grid, solver);
         }
 
-        private static void DisplayResults(System.Collections.ArrayList grid)
+        private static void DisplayResults(System.Collections.ArrayList grid, BaseSolver solver)
         {
 
             var i = 0;
+            var solns = solver.DataStore.GetEnumerable<ISolution>();
             foreach (string[] row in grid)
             {
                 for (var ix = 0; ix < row.Length; ix++) Write("{0,-12}", row[ix]);
-                WriteLine(" " + i++);
+                if (i>0) Write(solns.ElementAt(i-1).ToString());
+                WriteLine();
+                i++;
             }
             WriteLine(grid.Count - 1 + " solutions.");
         }

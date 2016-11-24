@@ -34,6 +34,7 @@ namespace RTH.BusDrivers
                             schedule.SetShift(index, line, earlyDriver);
                             schedule.SetShift(index - 1, line, driver);
 
+                            schedule.Algorithm += "!LateEarly";
                             return;
                         }
                     }

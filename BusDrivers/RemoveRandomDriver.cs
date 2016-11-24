@@ -13,6 +13,8 @@ namespace RTH.BusDrivers
             var schedule = s.DataStore.GetRandom<ISolution>() as Schedule;
             if (schedule == null) return;
 
+            bool modified = false;
+
             //choose a random driver
             for (int i = 0; i < 2; i++)
             {
@@ -23,10 +25,11 @@ namespace RTH.BusDrivers
                     for (int index = 0; index < schedule.GetShifts().GetLength(0); index++)
                     {
                         if (schedule.GetShifts()[index, line] == driver)
-                            schedule.SetShift(index, line, null);
+                            modified = modified || schedule.SetShift(index, line, null);
                     }
                 }
             }
+            if (modified) schedule.Algorithm += "!RemDriver";
         }
     }
 }

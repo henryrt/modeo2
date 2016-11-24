@@ -31,7 +31,7 @@ namespace RTH.BusDrivers
                 }
                 if (OK && schedule.SetShift(a.Day, a.Shift, a.Line, driver))
                 {
-               
+                    schedule.Algorithm += "|Random";
                 }
                
             }

@@ -7,7 +7,7 @@ namespace RTH.BusDrivers
         public void Run(ISolver solver)
         {            
             var s = solver as BusSolver;
-            var schedule = s.NewSchedule();
+            var schedule = s.NewSchedule(algName: "EmptyCreate");
             s.DataStore.Add<ISolution>(schedule);
         }
     }

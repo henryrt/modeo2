@@ -74,6 +74,8 @@ namespace RTH.BusDrivers
         private IList<Assignment> assignments;
         private Dictionary<Driver, bool[]> driverSchedules = new Dictionary<Driver, bool[]>();
 
+        public string Algorithm;
+
         public Schedule(Driver[] Drivers, int Days = 14, int NumLines = 3)
         {
             drivers = Drivers;
@@ -85,11 +87,29 @@ namespace RTH.BusDrivers
         public Schedule(ProblemStatement ps) 
             : this(ps.Drivers.ToArray(), ps.NumDays, ps.NumLines) { }
 
-        public Schedule Copy()
+        public Schedule Copy(string algName = null)
         {
-            var s = new Schedule(drivers, days, numLines);
+            var s = new Schedule(drivers, days, numLines)
+            {
+                Algorithm = algName ?? this.Algorithm
+            };
             Array.Copy(this.shifts, s.shifts, s.shifts.Length);
             return s;
+        }
+
+        public bool PopulateSchedule(string[] input)
+        {
+            for(int line=0; line< numLines; line++)
+            {
+                var r = input[line].Split(new char[0],StringSplitOptions.RemoveEmptyEntries); // split on whitespace
+                var index = 0;
+                foreach (string name in r)
+                {
+                    var driver = GetDriverByName(name);
+                    shifts[index++, line] = driver;
+                }
+            }
+            return true;
         }
         public override bool IsDuplicate(ISolution soln)
         {
@@ -137,6 +157,8 @@ namespace RTH.BusDrivers
             
             // reset cached data structures
             assignments = null;
+            ClearEvaluationCache();
+
             return true;
         }
 
@@ -228,13 +250,13 @@ namespace RTH.BusDrivers
                     retval = retval + "XX";
                     continue;
                 }
-                retval += Line(d, day, 0);
-                retval += Line(d, day, 1);
+                retval += DisplayLine(d, day, 0);
+                retval += DisplayLine(d, day, 1);
             }
             return retval;
         }
 
-        private string Line(Driver d, int day, int sh)
+        private string DisplayLine(Driver d, int day, int sh)
         {
             var sched = DriverSchedule(d);
             var index = day * 2 + sh;

@@ -9,7 +9,7 @@ namespace RTH.BusDrivers
         {
             // create a new solution and assign the prefered shifts for 5 random drivers
             var s = solver as BusSolver;
-            var schedule = s.NewSchedule();
+            var schedule = s.NewSchedule(algName: "PrefShiftAssignments");
             s.DataStore.Add<ISolution>(schedule);
             
             for (int i = 0; i<5; i++)

@@ -31,6 +31,7 @@ namespace RTH.BusDrivers
                 var lates = new Dictionary<Driver, int>();
                 Objectives.Lates(shifts, lates);
 
+                bool modified = false;
                 //choose a random driver for each line
                 for (int line = 0; line < s.Problem.NumLines; line++)
                 { 
@@ -49,7 +50,7 @@ namespace RTH.BusDrivers
                                 {
                                     if (r == 0)
                                     {
-                                        schedule.SetShift(index, line, null);
+                                        modified = modified || schedule.SetShift(index, line, null);
                                         // done with this driver and line
                                         goto driverLoop;
                                     }
@@ -63,6 +64,7 @@ namespace RTH.BusDrivers
                     }
                 driverLoop:;
                 }
+                if (modified) schedule.Algorithm += "|Excess";
             }
         }
     }

@@ -138,5 +138,27 @@ namespace RTH.BusDrivers
             return drivers.ElementAt(rand.Next(drivers.Count()));
         }
 
+        public Driver[,] ConstructRandomDay(int day)
+        {
+            //constructs a Driver array[2,numlines] of a suitable day schedule
+            //get all drivers who can work that day and line
+            Driver[,] retval = new Driver[2, NumLines];
+
+            for (int line = 0; line < NumLines; line++)
+            {
+                List<Driver> drivers = DriversForLine(line).Where(d => !d.DaysOff[day]).ToList();
+                if (drivers.Count() < 2) throw new ApplicationException("Infeasible configuration");
+
+                // add two random drivers, early and late shifts
+                var index = rand.Next(drivers.Count());
+                retval[0, line] = drivers.ElementAt(index);
+                drivers.RemoveAt(index);
+                index = rand.Next(drivers.Count());
+                retval[1, line] = drivers.ElementAt(index);
+            }
+
+            return retval;
+        }
+
     }
 }

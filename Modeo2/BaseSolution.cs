@@ -49,10 +49,18 @@ namespace RTH.Modeo2
             //foreach (var obj in objs) Console.WriteLine(String.Format("{0}\t{1}", thisEval[obj].Penalty, thatEval[obj].Penalty));
 
             // do not dominate another solution with identical penalties
-            if (objs.All(obj => thisEvaluationSet[obj].IdenticalPenalty(thatEvaluationSet[obj]))) return false;
+            if (objs.All(obj => thisEvaluationSet[obj].IdenticalPenalty(thatEvaluationSet[obj])))
+            {
+                //Console.WriteLine("{0} and {1} have identical penatlies", this, soln);
+                return false;
+            }
 
             //This dominates if That is worse on all objectives
-            return objs.All(obj => thatEvaluationSet[obj].WorseOrEqual(thisEvaluationSet[obj]));
+            var retval = objs.All(obj => thatEvaluationSet[obj].WorseOrEqual(thisEvaluationSet[obj]));
+            //if (retval) Console.WriteLine("{0} dominates {1}", this, soln);
+            //if (!retval) Console.WriteLine("{0} does not dominate {1}", this, soln);
+
+            return retval;
 
             
         }
@@ -82,6 +90,13 @@ namespace RTH.Modeo2
             return eval;
         }
 
+        public Evaluation Evaluate(string objectiveName)
+        {
+            // should only be called after all objectives have been evaluated
+            if (Evaluations == null) return null;
+            var retval = Evaluations.Where(kvp => kvp.Key.Name == objectiveName).Select(kvp=>kvp.Value).FirstOrDefault();
+            return retval;
+        }
         public bool IsDominated(IEnumerable<ISolution> solns, IEnumerable<IObjective> objs)
         {
             // no need to test a solution that is already dominated
